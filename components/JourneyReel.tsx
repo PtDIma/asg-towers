@@ -19,7 +19,7 @@ import { trackEvent } from "@/lib/analytics";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const INFRA_STEP = 600; // scroll px per infra card
-const FRAME = "/images/elevator-frame.png";
+const FRAME = "/images/elevator-frame.webp";
 // Card area inside the elevator (slightly larger than the frame's transparent
 // hole, so the metal always overlaps the card edges — no spill possible).
 // Card area inside the real lift frame (Кадры/7.png — the exact end frame of
@@ -129,10 +129,19 @@ function AnimatedJourney() {
     const seekLoop = () => {
       if (disposed) return;
       const v = videoRefs.current[seekIdx.current];
-      if (v && v.readyState >= 1 && Number.isFinite(seekTime.current)) {
-        if (Math.abs(v.currentTime - seekTime.current) > 0.01) {
+      // Don't queue a new seek while one is still in flight — that thrashes the
+      // decoder and causes the stutter. Use fastSeek (nearest keyframe) for big
+      // jumps during fast scroll, exact seek when settling.
+      if (v && v.readyState >= 2 && !v.seeking && Number.isFinite(seekTime.current)) {
+        const delta = Math.abs(v.currentTime - seekTime.current);
+        if (delta > 0.015) {
           try {
-            v.currentTime = seekTime.current;
+            const vv = v as HTMLVideoElement & { fastSeek?: (t: number) => void };
+            if (delta > 0.4 && typeof vv.fastSeek === "function") {
+              vv.fastSeek(seekTime.current);
+            } else {
+              v.currentTime = seekTime.current;
+            }
           } catch {
             /* ignore */
           }
