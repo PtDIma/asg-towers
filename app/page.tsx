@@ -6,12 +6,10 @@ import { StickyCTA } from "@/components/StickyCTA";
 import { JourneyReel } from "@/components/JourneyReel";
 import { Footer } from "@/components/Footer";
 import { LeadModal } from "@/components/LeadModal";
-import { SmoothScroll } from "@/components/SmoothScroll";
 
 export default function Page() {
   return (
     <UIProvider>
-      <SmoothScroll />
       <Header />
 
       <main>
