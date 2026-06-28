@@ -190,7 +190,18 @@ function AnimatedJourney() {
         seekIdx.current = seg.vIdx;
         const v = videoRefs.current[seg.vIdx];
         if (v?.duration) seekTime.current = Math.min(v.duration - 0.05, lp * v.duration);
-        textProgress.set(lp);
+        // When crossing into a new copy group, React still renders the old
+        // VideoOverlay for one frame before setView commits. If we wrote the
+        // new (small) lp now, the old overlay's exit transform would snap
+        // back to "visible" → title flashes. Latch shared progress at 1 so
+        // the outgoing overlay stays exited; next tick sets normal lp on the
+        // freshly mounted new overlay.
+        const oldGroup = viewRef.current.startsWith("v")
+          ? groupIds[parseInt(viewRef.current.slice(1), 10)]
+          : -1;
+        const newGroup = groupIds[seg.vIdx];
+        const remountingOverlay = oldGroup !== -1 && oldGroup !== newGroup;
+        textProgress.set(remountingOverlay ? 1 : lp);
 
         // Supermarket shows only through the white as scene 06's doors open:
         // `multiply` masks it to the bright opening and hides it over the dark doors.
@@ -272,7 +283,9 @@ function AnimatedJourney() {
             /* ignore */
           }
         }
-        textProgress.set(lp);
+        // FinalOverlay doesn't read textProgress; keep it latched at 1 so the
+        // last VideoOverlay (still rendered until setView commits) stays exited.
+        textProgress.set(1);
         if (viewRef.current !== "final") {
           viewRef.current = "final";
           setView({ kind: "final", idx: RIVER_IDX });
