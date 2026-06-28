@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background-color: #050505;
+  color: #ffffff;
+  /* Prevent any accidental horizontal scroll on mobile. */
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  touch-action: manipulation; /* removes 300ms tap delay */
+}
+
+/* Keep videos from showing native controls / picture-in-picture chrome. */
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+/* Subtle, theme-aware scrollbar on desktop. */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(200, 169, 106, 0.3);
+    border-radius: 999px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}

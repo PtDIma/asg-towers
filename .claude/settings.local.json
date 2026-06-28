@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api *)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ls \"/Users/ptdima/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/\" 2>/dev/null | head -5 && ls \"/Users/ptdima/.claude/\" 2>/dev/null)",
+      "Bash(find \"/Users/ptdima/Library/Application Support/Claude\" -name \"SKILL.md\" 2>/dev/null | head -10)",
+      "Bash(mkdir -p \"/Users/ptdima/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/c64bb9d2-2c59-452f-9e75-47d817593f59/8db6c215-e454-4fa0-b72c-344aacf24217/skills/frontend-design\")"
+    ]
+  }
+}
