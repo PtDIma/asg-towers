@@ -3,44 +3,30 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useUI } from "@/hooks/useLeadModal";
-import { scrollToId } from "@/lib/scroll";
 import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 
-// Sections where the big buttons live → sticky bar steps aside.
-const HIDE_NEAR_IDS = ["final-cta", "plans", "contact"];
-
 export function StickyCTA() {
-  const { isLeadOpen, setActiveTab } = useUI();
-  const [nearCta, setNearCta] = useState(false);
+  const { isLeadOpen, inFinal, openLead } = useUI();
+  const [nearContact, setNearContact] = useState(false);
 
   useEffect(() => {
-    const targets = HIDE_NEAR_IDS.map((id) => document.getElementById(id)).filter(
-      (el): el is HTMLElement => Boolean(el)
-    );
-    if (!targets.length) return;
-
-    const visible = new Set<Element>();
+    const footer = document.getElementById("contact");
+    if (!footer) return;
     const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) visible.add(entry.target);
-          else visible.delete(entry.target);
-        }
-        setNearCta(visible.size > 0);
-      },
+      ([entry]) => setNearContact(entry.isIntersecting),
       { threshold: 0.08 }
     );
-    targets.forEach((t) => observer.observe(t));
+    observer.observe(footer);
     return () => observer.disconnect();
   }, []);
 
-  const hidden = isLeadOpen || nearCta;
+  const hidden = isLeadOpen || inFinal || nearContact;
 
   const onClick = () => {
+    // TODO: link to the dedicated plans page once it exists.
     trackEvent("cta_click", { label: "sticky:plans" });
-    setActiveTab("apartment");
-    scrollToId("plans");
+    openLead({ interest: "apartment", source: "sticky" });
   };
 
   return (
@@ -56,7 +42,7 @@ export function StickyCTA() {
         >
           <button
             onClick={onClick}
-            aria-label="Выбрать планировку — цены, виды, рассрочка"
+            aria-label="Выбрать планировку — квартиры, офисы, коммерция"
             className="flex h-[56px] w-full items-center justify-between rounded-full border border-gold-soft bg-[rgba(5,5,5,0.72)] px-5 backdrop-blur-xl transition-transform duration-200 ease-luxe active:scale-[0.98] cursor-pointer"
           >
             <span className="flex flex-col items-start leading-tight">
@@ -64,7 +50,7 @@ export function StickyCTA() {
                 Выбрать планировку
               </span>
               <span className="text-[11px] tracking-wide text-gold/80">
-                цены · виды · рассрочка
+                квартиры · офисы · коммерция
               </span>
             </span>
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-ink">

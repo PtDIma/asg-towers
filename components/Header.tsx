@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useUI } from "@/hooks/useLeadModal";
-import { scrollToId } from "@/lib/scroll";
 import { trackEvent } from "@/lib/analytics";
 
 export function Header() {
-  const { openLead, setActiveTab } = useUI();
+  const { openLead } = useUI();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -16,11 +15,6 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const toPlans = () => {
-    trackEvent("cta_click", { label: "header:plans" });
-    setActiveTab("apartment");
-    scrollToId("plans");
-  };
   const toContact = () => {
     trackEvent("cta_click", { label: "header:contact" });
     openLead({ interest: "consultation", source: "header" });
@@ -48,12 +42,6 @@ export function Header() {
         </button>
 
         <nav className="flex items-center gap-1.5" aria-label="Основная навигация">
-          <button
-            onClick={toPlans}
-            className="min-h-[40px] rounded-full px-3 text-[13px] font-medium text-white/85 transition-colors duration-200 hover:text-white cursor-pointer"
-          >
-            Планировки
-          </button>
           <button
             onClick={toContact}
             aria-label="Связаться с менеджером"

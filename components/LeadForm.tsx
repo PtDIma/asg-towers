@@ -33,6 +33,7 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
   const [comment, setComment] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [sendError, setSendError] = useState(false);
 
   const validate = (): Errors => {
     const e: Errors = {};
@@ -53,6 +54,7 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
       return;
     }
     setSubmitting(true);
+    setSendError(false);
     const payload: LeadPayload = {
       name: name.trim(),
       phone: phone.trim(),
@@ -65,6 +67,8 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
       await submitLead(payload);
       trackEvent("lead_submit", { interest, unitId });
       onSuccess();
+    } catch {
+      setSendError(true);
     } finally {
       setSubmitting(false);
     }
@@ -193,6 +197,12 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
           </>
         )}
       </button>
+
+      {sendError && (
+        <p role="alert" className="text-center text-[13px] text-red-400">
+          Не удалось отправить заявку. Попробуйте ещё раз или напишите нам в Telegram.
+        </p>
+      )}
 
       <p className="text-center text-[12px] leading-relaxed text-white/45">
         Менеджер свяжется с вами и отправит подробности по выбранному объекту.

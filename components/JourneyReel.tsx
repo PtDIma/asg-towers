@@ -8,11 +8,13 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { scenesBeforeInfra, scenesAfterInfra, type Scene } from "@/data/scenes";
+import { scenesBeforeInfra, scenesAfterInfra, finalScene, type Scene } from "@/data/scenes";
 import { infraItems, type InfraItem } from "@/data/infrastructure";
 import { infraIconMap } from "@/components/infraIcons";
 import { useUI } from "@/hooks/useLeadModal";
+import { Button } from "@/components/Button";
 import { ArrowRight } from "@/components/icons";
+import type { LeadInterest } from "@/lib/lead";
 import { trackEvent } from "@/lib/analytics";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -20,14 +22,23 @@ const INFRA_STEP = 600; // scroll px per infra card
 const FRAME = "/images/elevator-frame.png";
 // Card area inside the elevator (slightly larger than the frame's transparent
 // hole, so the metal always overlaps the card edges — no spill possible).
-const DOOR = { left: 21, top: 10.5, width: 58, height: 83 };
+// Card area inside the real lift frame (Кадры/7.png — the exact end frame of
+// video 6-7). The white opening was keyed to transparency at L25.6 R75.9 T11.8
+// B91.5 (center 50.7%). The card is a touch larger so the metal always overlaps
+// its edges — no spill possible.
+const DOOR = { left: 23, top: 9.5, width: 55.4, height: 84 };
 
 const allScenes: Scene[] = [...scenesBeforeInfra, ...scenesAfterInfra];
 const INFRA_AT = scenesBeforeInfra.length; // infra sits between video 06 and 07
+const RIVER_IDX = allScenes.length; // looping river video sits after the 14 clips
+const INTRO_IDX = RIVER_IDX + 1; // idle 0.mp4 background, shown until first scroll
+const INTRO_SRC = "/videos/00-intro.mp4";
+const FINAL_LEN = 1100; // scroll the final CTA screen stays pinned
 
 type Segment =
   | { kind: "video"; vIdx: number; scene: Scene; len: number }
-  | { kind: "infra"; len: number };
+  | { kind: "infra"; len: number }
+  | { kind: "final"; len: number };
 
 const segments: Segment[] = [
   ...scenesBeforeInfra.map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: s.scrollLength })),
@@ -38,6 +49,7 @@ const segments: Segment[] = [
     scene: s,
     len: s.scrollLength,
   })),
+  { kind: "final" as const, len: FINAL_LEN },
 ];
 
 const TOTAL = segments.reduce((a, s) => a + s.len, 0);
@@ -77,11 +89,11 @@ function AnimatedJourney() {
   const trackRef = useRef<HTMLDivElement>(null);
   const textProgress = useMotionValue(0);
   const infraCenter = useMotionValue(0);
-  const [view, setView] = useState<{ kind: "video" | "infra"; idx: number }>({
+  const [view, setView] = useState<{ kind: "video" | "infra" | "final"; idx: number }>({
     kind: "video",
     idx: 0,
   });
-  const { goToPlans } = useUI();
+  const { openLead, setInFinal } = useUI();
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -94,6 +106,9 @@ function AnimatedJourney() {
     const seekTime = { current: 0 };
     const viewRef = { current: "v0" };
     const escalated = new Set<number>();
+
+    // 0.mp4 plays as the background until the first real scroll into the journey.
+    const startedRef = { current: false };
 
     const escalate = (i: number) => {
       const v = videoRefs.current[i];
@@ -134,6 +149,31 @@ function AnimatedJourney() {
       const lp = Math.min(1, Math.max(0, (gp - segStart) / (segEnd - segStart)));
       const seg = segments[i];
 
+      // Idle: 0.mp4 plays behind the scene-01 copy until the first real scroll.
+      if (gp > 0.001) startedRef.current = true;
+      const introV = videoRefs.current[INTRO_IDX];
+      if (seg.kind === "video" && seg.vIdx === 0 && !startedRef.current) {
+        showVideo(INTRO_IDX);
+        if (introV && introV.paused) introV.play().catch(() => {});
+        seekIdx.current = -1;
+        textProgress.set(0);
+        if (infraLayerRef.current) infraLayerRef.current.style.opacity = "0";
+        if (frameRef.current) frameRef.current.style.opacity = "0";
+        if (viewRef.current !== "v0") {
+          viewRef.current = "v0";
+          setView({ kind: "video", idx: 0 });
+          setInFinal(false);
+        }
+        return;
+      }
+      if (introV && !introV.paused) introV.pause();
+
+      // Keep the looping river paused unless we're on the final screen.
+      if (seg.kind !== "final") {
+        const rv = videoRefs.current[RIVER_IDX];
+        if (rv && !rv.paused) rv.pause();
+      }
+
       if (seg.kind === "video") {
         showVideo(seg.vIdx);
         escalate(seg.vIdx);
@@ -161,8 +201,9 @@ function AnimatedJourney() {
         if (viewRef.current !== "v" + seg.vIdx) {
           viewRef.current = "v" + seg.vIdx;
           setView({ kind: "video", idx: seg.vIdx });
+          setInFinal(false);
         }
-      } else {
+      } else if (seg.kind === "infra") {
         // Infra phase — elevator doorway carousel.
         const n = infraItems.length;
         const underIdx = lp < 0.5 ? INFRA_AT - 1 : INFRA_AT;
@@ -205,6 +246,28 @@ function AnimatedJourney() {
         if (viewRef.current !== "infra") {
           viewRef.current = "infra";
           setView({ kind: "infra", idx: INFRA_AT - 1 });
+          setInFinal(false);
+        }
+      } else {
+        // Final screen — looping river behind the CTA. No scrub: just play & loop.
+        if (infraLayerRef.current) infraLayerRef.current.style.opacity = "0";
+        showVideo(RIVER_IDX);
+        escalate(RIVER_IDX);
+        seekIdx.current = -1; // do not seek the river
+        const rv = videoRefs.current[RIVER_IDX];
+        if (rv && rv.paused) {
+          try {
+            rv.currentTime = 0;
+            rv.play().catch(() => {});
+          } catch {
+            /* ignore */
+          }
+        }
+        textProgress.set(lp);
+        if (viewRef.current !== "final") {
+          viewRef.current = "final";
+          setView({ kind: "final", idx: RIVER_IDX });
+          setInFinal(true);
         }
       }
     };
@@ -241,10 +304,11 @@ function AnimatedJourney() {
       cancelAnimationFrame(rafId);
       cleanup();
     };
-  }, [textProgress, infraCenter]);
+  }, [textProgress, infraCenter, setInFinal]);
 
-  const isInfra = view.kind === "infra";
-  const activeScene = allScenes[view.idx];
+  const isFinal = view.kind === "final";
+  const activeScene = allScenes[Math.min(view.idx, allScenes.length - 1)];
+  const backdropPoster = isFinal ? finalScene.posterSrc : activeScene.posterSrc;
 
   return (
     <section
@@ -256,7 +320,7 @@ function AnimatedJourney() {
       {/* Desktop ambient backdrop */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={activeScene.posterSrc}
+        src={backdropPoster}
         alt=""
         aria-hidden
         className="absolute inset-0 hidden h-full w-full scale-110 object-cover opacity-30 blur-2xl md:block"
@@ -271,7 +335,7 @@ function AnimatedJourney() {
               videoRefs.current[i] = el;
             }}
             className="absolute inset-0 h-full w-full object-cover object-center"
-            style={{ opacity: i === 0 ? 1 : 0 }}
+            style={{ opacity: 0 }}
             src={scene.videoSrc}
             poster={scene.posterSrc}
             muted
@@ -280,24 +344,70 @@ function AnimatedJourney() {
             tabIndex={-1}
           />
         ))}
+        {/* Idle intro background — shown until the first scroll */}
+        <video
+          ref={(el) => {
+            videoRefs.current[INTRO_IDX] = el;
+          }}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+          style={{ opacity: 1 }}
+          src={INTRO_SRC}
+          poster="/posters/01.jpg"
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload="auto"
+          tabIndex={-1}
+        />
+        {/* Looping river video for the final CTA screen */}
+        <video
+          ref={(el) => {
+            videoRefs.current[RIVER_IDX] = el;
+          }}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+          style={{ opacity: 0 }}
+          src={finalScene.videoSrc}
+          poster={finalScene.posterSrc}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          tabIndex={-1}
+        />
 
         {/* Video text overlay */}
-        {!isInfra && (
+        {view.kind === "video" && (
           <VideoOverlay
             key={groupIds[view.idx]}
             scene={activeScene}
             localProgress={textProgress}
             fadeOnExit={isLastInGroup(view.idx)}
-            onCta={() => {
-              trackEvent("cta_click", { label: activeScene.ctaLabel, scene: activeScene.id });
-              goToPlans();
+          />
+        )}
+
+        {/* Final CTA screen */}
+        {isFinal && (
+          <FinalOverlay
+            onLead={(interest, source) => {
+              const label =
+                source === "final-primary"
+                  ? finalScene.primaryCta
+                  : source === "final-secondary"
+                  ? finalScene.secondaryCta
+                  : finalScene.thirdCta;
+              trackEvent("cta_click", { label, scene: finalScene.id });
+              openLead({ interest, source });
             }}
           />
         )}
 
         {/* Infra doorway layer (frame on top, cards behind, revealed via hole) */}
         <div ref={infraLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
-          <div className="absolute left-1/2 top-0 h-full aspect-[820/1232] -translate-x-1/2">
+          <div
+          className="absolute left-1/2 top-0 h-full aspect-[820/1232]"
+          style={{ transform: "translateX(calc(-50% - 0.7%))" }}
+        >
             {/* Cards behind the metal */}
             <div
               className="absolute z-0 overflow-hidden"
@@ -336,12 +446,10 @@ function VideoOverlay({
   scene,
   localProgress,
   fadeOnExit,
-  onCta,
 }: {
   scene: Scene;
   localProgress: MotionValue<number>;
   fadeOnExit: boolean;
-  onCta: () => void;
 }) {
   const endsWhite = scene.theme === "light-transition";
   const exitOpacity = useTransform(localProgress, [0.82, 0.98], [1, 0]);
@@ -372,10 +480,7 @@ function VideoOverlay({
         >
           <div className="max-w-[34ch]">
             <Line delay={0}>
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-eyebrow text-gold">{scene.eyebrow}</p>
-            </Line>
-            <Line delay={0.12}>
-              <h2 className="text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">
+              <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">
                 {scene.title}
               </h2>
             </Line>
@@ -392,22 +497,67 @@ function VideoOverlay({
                 <p className="mt-4 text-[12px] uppercase tracking-[0.12em] text-white/55">{scene.microText}</p>
               </Line>
             )}
-            {scene.ctaLabel && (
-              <Line delay={0.4} className="mt-7">
-                <button
-                  onClick={onCta}
-                  aria-label={scene.ctaLabel}
-                  className="group inline-flex min-h-[48px] items-center gap-2 rounded-full border border-gold/55 bg-white/8 px-5 text-[15px] font-medium text-white backdrop-blur-md transition-transform duration-200 ease-luxe active:scale-[0.97] cursor-pointer"
-                >
-                  {scene.ctaLabel}
-                  <ArrowRight className="h-4 w-4 transition-transform duration-200 ease-luxe group-active:translate-x-0.5" />
-                </button>
-              </Line>
-            )}
           </div>
         </div>
       </motion.div>
     </>
+  );
+}
+
+/* ───────────────────────────── Final CTA overlay ───────────────────────────── */
+
+function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: string) => void }) {
+  const fade = { initial: { opacity: 0, y: 22 }, animate: { opacity: 1, y: 0 } };
+  return (
+    <div className="absolute inset-0 z-40">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/25" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/55 to-transparent" />
+      <div
+        className="relative z-10 flex h-full flex-col justify-end px-5"
+        style={{
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 28px)",
+          paddingTop: "calc(env(safe-area-inset-top) + 80px)",
+        }}
+      >
+        <motion.h2
+          {...fade}
+          transition={{ duration: 0.8, delay: 0.06, ease }}
+          className="max-w-[22ch] text-balance text-[clamp(30px,9vw,46px)] font-semibold leading-[1.02] tracking-tightest text-white"
+        >
+          {finalScene.title}
+        </motion.h2>
+        <motion.ul
+          {...fade}
+          transition={{ duration: 0.8, delay: 0.14, ease }}
+          className="mt-5 flex flex-col gap-1.5"
+        >
+          {finalScene.useCases.map((u) => (
+            <li key={u} className="flex items-center gap-2.5 text-[15px] text-white/85">
+              <span className="h-1 w-1 shrink-0 rounded-full bg-gold" />
+              {u}
+            </li>
+          ))}
+        </motion.ul>
+        <motion.div
+          {...fade}
+          transition={{ duration: 0.8, delay: 0.22, ease }}
+          className="mt-7 flex flex-col gap-3"
+        >
+          <Button variant="primary" block onClick={() => onLead("apartment", "final-primary")} aria-label={finalScene.primaryCta}>
+            {finalScene.primaryCta}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="ghost" onClick={() => onLead("consultation", "final-secondary")} aria-label={finalScene.secondaryCta}>
+              Связаться
+            </Button>
+            <Button variant="outline" onClick={() => onLead("investment", "final-third")} aria-label={finalScene.thirdCta}>
+              {finalScene.thirdCta}
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -444,8 +594,9 @@ function DoorSlide({
 
   return (
     <div className="h-full shrink-0" style={{ width: `${100 / count}%` }}>
-      {/* border-r = a dark seam between cards so they don't look stuck together */}
-      <article className="flex h-full w-full flex-col border-r-[7px] border-[#17110a] bg-[#f1ece2]">
+      <article className="relative flex h-full w-full flex-col bg-[#f1ece2]">
+        {/* Seam between cards (overlay, so it doesn't shift the centered content) */}
+        <span className="pointer-events-none absolute right-0 top-0 z-20 h-full w-[6px] bg-[#17110a]" />
         <motion.div
           style={{ opacity: textOpacity, y: textY }}
           className="flex flex-col items-center px-[8%] pb-[5%] pt-[12%] text-center"
@@ -504,7 +655,24 @@ function StaticJourney() {
       {allScenes.slice(INFRA_AT).map((s) => (
         <StaticScene key={s.id} scene={s} />
       ))}
+      <StaticFinal />
     </>
+  );
+}
+
+function StaticFinal() {
+  const { openLead } = useUI();
+  return (
+    <section className="relative h-[100svh] w-full overflow-hidden bg-ink" aria-label="Выбор объекта">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={finalScene.posterSrc} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+      <FinalOverlay
+        onLead={(interest, source) => {
+          trackEvent("cta_click", { scene: finalScene.id, source });
+          openLead({ interest, source });
+        }}
+      />
+    </section>
   );
 }
 
@@ -519,8 +687,7 @@ function StaticScene({ scene }: { scene: Scene }) {
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)", paddingTop: "calc(env(safe-area-inset-top) + 72px)" }}
       >
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.4 }} transition={{ duration: 0.6, ease }} className="max-w-[34ch]">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-eyebrow text-gold">{scene.eyebrow}</p>
-          <h2 className="text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">{scene.title}</h2>
+          <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">{scene.title}</h2>
           <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78]">{scene.description}</p>
         </motion.div>
       </div>

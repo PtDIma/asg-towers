@@ -32,7 +32,7 @@ export const scenesBeforeInfra: Scene[] = [
     videoSrc: "/videos/01-orbit-facade.mp4",
     posterSrc: "/posters/01.jpg",
     eyebrow: "ASG Towers",
-    title: "Город в городе. Дом, из которого не хочется выходить.",
+    title: "Город в городе.\nДом, из которого не хочется выходить.",
     description:
       "Квартиры, офисы, отель, коммерция и инфраструктура у реки Кура — в одном комплексе.",
     microText: "Тбилиси · первая линия у реки",
@@ -226,8 +226,8 @@ export const finalScene = {
   id: "scene-15",
   videoSrc: "/videos/15-river-loop.mp4",
   posterSrc: "/posters/15.jpg",
-  eyebrow: "Выбор объекта",
-  title: "Выберите своё место в ASG Towers.",
+  eyebrow: "",
+  title: "С видом на реку, выбирать приятнее:",
   useCases: [
     "Квартира для жизни",
     "Квартира под аренду",

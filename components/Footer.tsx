@@ -20,7 +20,7 @@ export function Footer() {
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 48px)" }}
       aria-label="Контакты"
     >
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto md:max-w-[460px]">
         <div className="flex items-baseline gap-1.5">
           <span className="text-[18px] font-semibold tracking-[-0.02em]">ASG</span>
           <span className="text-[18px] font-light tracking-[0.18em] text-gold">

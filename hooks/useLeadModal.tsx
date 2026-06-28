@@ -26,7 +26,10 @@ interface UIContextValue {
   leadUnitId?: string;
   openLead: (options?: OpenLeadOptions) => void;
   closeLead: () => void;
-  // Plans tab coordination (final-scene shortcuts → plans section)
+  // True while the reel is on the final CTA screen (sticky bar steps aside).
+  inFinal: boolean;
+  setInFinal: (v: boolean) => void;
+  // Plans tab coordination (kept for the dedicated plans page)
   activeTab: UnitType;
   setActiveTab: (tab: UnitType) => void;
   goToPlans: (tab?: UnitType) => void;
@@ -38,6 +41,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [isLeadOpen, setLeadOpen] = useState(false);
   const [leadInterest, setLeadInterest] = useState<LeadInterest | undefined>();
   const [leadUnitId, setLeadUnitId] = useState<string | undefined>();
+  const [inFinal, setInFinal] = useState(false);
   const [activeTab, setActiveTab] = useState<UnitType>("apartment");
 
   const openLead = useCallback((options: OpenLeadOptions = {}) => {
@@ -65,11 +69,13 @@ export function UIProvider({ children }: { children: ReactNode }) {
       leadUnitId,
       openLead,
       closeLead,
+      inFinal,
+      setInFinal,
       activeTab,
       setActiveTab,
       goToPlans,
     }),
-    [isLeadOpen, leadInterest, leadUnitId, openLead, closeLead, activeTab, goToPlans]
+    [isLeadOpen, leadInterest, leadUnitId, openLead, closeLead, inFinal, activeTab, goToPlans]
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
