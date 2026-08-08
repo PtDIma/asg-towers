@@ -16,33 +16,40 @@ export function Footer() {
   return (
     <footer
       id="contact"
-      className="relative w-full border-t border-white/10 bg-ink px-5 pt-16 text-white"
+      className="relative w-full border-t border-white/10 bg-ink px-5 pt-16 text-white lg:px-12 lg:pt-24 2xl:px-20"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 48px)" }}
       aria-label="Контакты"
     >
-      <div className="mx-auto md:max-w-[460px]">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-[18px] font-semibold tracking-[-0.02em]">ASG</span>
-          <span className="text-[18px] font-light tracking-[0.18em] text-gold">
-            TOWERS
-          </span>
-        </div>
-        <h2 className="mt-6 max-w-[18ch] text-balance text-[clamp(28px,8vw,42px)] font-semibold leading-[1.0] tracking-tightest">
-          Вертикальный город у Куры.
-        </h2>
-        <p className="mt-4 max-w-[42ch] text-[15px] leading-[1.5] text-gray-text">
-          Тбилиси, первая линия у реки Кура. Жилая башня, офисы, отель, коммерция
-          и инфраструктура в одном комплексе.
-        </p>
+      {/* 460px column keeps the phone-shaped layout for the mobile reel (which
+          runs up to 1024); from lg the desktop cut takes over and the footer
+          opens into two columns. */}
+      <div className="mx-auto md:max-w-[460px] lg:max-w-[1600px]">
+        <div className="lg:flex lg:items-start lg:justify-between lg:gap-20">
+          <div className="lg:max-w-[46%]">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[18px] font-semibold tracking-[-0.02em]">ASG</span>
+              <span className="text-[18px] font-light tracking-[0.18em] text-gold">
+                TOWERS
+              </span>
+            </div>
+            <h2 className="mt-6 max-w-[18ch] text-balance text-[clamp(28px,8vw,42px)] font-semibold leading-[1.0] tracking-tightest lg:text-[clamp(38px,3.2vw,56px)]">
+              Вертикальный город у Куры.
+            </h2>
+            <p className="mt-4 max-w-[42ch] text-[15px] leading-[1.5] text-gray-text lg:mt-6 lg:text-[17px]">
+              Тбилиси, первая линия у реки Кура. Жилая башня, офисы, отель, коммерция
+              и инфраструктура в одном комплексе.
+            </p>
+          </div>
 
-        <div className="mt-8">
-          <Button variant="primary" onClick={contact} aria-label="Связаться с менеджером">
-            Связаться с менеджером
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="mt-8 lg:mt-3 lg:shrink-0">
+            <Button variant="primary" onClick={contact} aria-label="Связаться с менеджером">
+              Связаться с менеджером
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 text-[13px] text-white/45">
+        <div className="mt-12 flex flex-col gap-2 text-[13px] text-white/45 lg:mt-20 lg:flex-row lg:justify-between lg:border-t lg:border-white/10 lg:pt-8">
           <p>ASG Towers · Tbilisi, Georgia</p>
           <p>© {new Date().getFullYear()} ASG Development. Все права защищены.</p>
         </div>

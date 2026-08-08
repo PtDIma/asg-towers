@@ -21,13 +21,17 @@ export function Header() {
   };
 
   return (
+    /* Desktop needs a heavier scrim: that journey passes through a cream
+       infrastructure section, where black/35 leaves the wordmark muddy. */
     <header
       className={`fixed inset-x-0 top-0 z-[100] transition-colors duration-300 ${
-        scrolled ? "bg-black/35 backdrop-blur-xl" : "bg-black/15 backdrop-blur-md"
+        scrolled
+          ? "bg-black/35 backdrop-blur-xl lg:bg-ink/80"
+          : "bg-black/15 backdrop-blur-md lg:bg-gradient-to-b lg:from-ink/70 lg:to-transparent"
       }`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="flex h-14 items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4 lg:h-[76px] lg:px-12 2xl:px-20">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="ASG Towers — наверх"

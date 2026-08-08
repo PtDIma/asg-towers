@@ -7,7 +7,7 @@ import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 
 export function StickyCTA() {
-  const { isLeadOpen, inFinal, openLead } = useUI();
+  const { isLeadOpen, inFinal } = useUI();
   const [nearContact, setNearContact] = useState(false);
 
   useEffect(() => {
@@ -24,9 +24,8 @@ export function StickyCTA() {
   const hidden = isLeadOpen || inFinal || nearContact;
 
   const onClick = () => {
-    // TODO: link to the dedicated plans page once it exists.
     trackEvent("cta_click", { label: "sticky:plans" });
-    openLead({ interest: "apartment", source: "sticky" });
+    window.location.href = "/apartments/";
   };
 
   return (

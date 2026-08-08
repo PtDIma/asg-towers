@@ -316,7 +316,11 @@ function AnimatedJourney() {
       rafId = requestAnimationFrame(seekLoop);
       ScrollTrigger.refresh();
       cleanup = () => {
-        trigger.kill();
+        // revert=true unwraps the pin-spacer GSAP injected around the section.
+        // Without it the section stays parented to the spacer, and unmounting
+        // the reel (e.g. resizing past the desktop breakpoint) makes React
+        // remove it from a parent it no longer belongs to → NotFoundError.
+        trigger.kill(true);
         ScrollTrigger.refresh();
       };
     })();
