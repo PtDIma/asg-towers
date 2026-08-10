@@ -7,6 +7,7 @@ import {
   facadeImage,
   floorPlans,
   unitPlan,
+  unitPlan3d,
   type ApartmentGeo,
   type FloorPlan,
 } from "@/data/apartments";
@@ -700,14 +701,50 @@ function UnitSheet({
  * Позиционируются от реального бокса картинки, а не контейнера — при
  * object-contain они отличаются на величину полей.
  */
+/**
+ * Планировка квартиры: объёмная визуализация и плоский чертёж.
+ * По умолчанию открывается 3D — с мебелью она понятнее покупателю,
+ * а 2D остаётся под рукой для тех, кто читает чертёж.
+ */
 function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
+  const [mode, setMode] = useState<"3d" | "2d">("3d");
+
+  // Сброс на 3D при переходе к другой квартире — иначе выбранная вкладка
+  // «прилипает» и следующая карточка открывается чертежом.
+  useEffect(() => setMode("3d"), [unit.id]);
+
+  const tabs = [
+    { key: "3d" as const, label: "3D" },
+    { key: "2d" as const, label: "2D" },
+  ];
+
   return (
-    <div className="relative flex w-full items-center justify-center">
+    <div className="relative flex w-full flex-col items-center">
+      <div className="mb-3 inline-flex rounded-full bg-black/[0.06] p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setMode(t.key)}
+            aria-pressed={mode === t.key}
+            className={`cursor-pointer rounded-full px-5 py-1.5 text-[13px] font-semibold tracking-wide transition-colors duration-200 ${
+              mode === t.key ? "bg-[#0A0A0B] text-white" : "text-[#0A0A0B]/55 hover:text-[#0A0A0B]"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={unitPlan(unit.id)}
-        alt={`Планировка квартиры ${unit.id}`}
-        className="max-h-[46vh] w-auto max-w-full object-contain sm:max-h-[400px]"
+        key={mode}
+        src={mode === "3d" ? unitPlan3d(unit.id) : unitPlan(unit.id)}
+        alt={
+          mode === "3d"
+            ? `Квартира ${unit.id} — объёмная планировка`
+            : `Квартира ${unit.id} — чертёж`
+        }
+        className="max-h-[42vh] w-auto max-w-full object-contain sm:max-h-[370px]"
       />
     </div>
   );

@@ -142,8 +142,11 @@ export const floorPlans: FloorPlan[] = [
 
 export const allApartments: ApartmentGeo[] = floorPlans.flatMap((f) => f.units);
 
-/** Нарезка конкретной квартиры — отдельный файл на каждую. */
+/** Плоская нарезка квартиры — отдельный файл на каждую. */
 export const unitPlan = (id: string) => withVersion(`/images/units/${id}.webp`);
+
+/** Объёмная визуализация квартиры с меблировкой. Показывается по умолчанию. */
+export const unitPlan3d = (id: string) => withVersion(`/images/units3d/${id}.webp`);
 
 /**
  * Полосы жилых этажей на фасаде. Найдены измерением: по перепаду яркости в
