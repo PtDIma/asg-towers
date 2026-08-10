@@ -6,6 +6,7 @@ import {
   facadeBands,
   facadeImage,
   floorPlans,
+  unitPlan,
   type ApartmentGeo,
   type FloorPlan,
 } from "@/data/apartments";
@@ -597,7 +598,7 @@ function UnitSheet({
         </button>
 
         <div className="grid sm:grid-cols-[1.05fr_1fr]">
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-white sm:aspect-auto sm:min-h-[420px]">
+          <div className="relative flex w-full items-center justify-center overflow-hidden bg-white p-5 sm:min-h-[440px] sm:p-7">
             {info?.renderUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
@@ -606,7 +607,9 @@ function UnitSheet({
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
-              <UnitPlanCrop unit={unit} fill={status[st].fill} />
+              /* Нарезанный план квартиры. Пропорции у них разные — от узкой
+                 полосы 0.29 до широкой 1.5, поэтому вписываем, а не обрезаем. */
+              <UnitPlanWithLabels unit={unit} />
             )}
           </div>
 
@@ -691,44 +694,21 @@ function UnitSheet({
   );
 }
 
-/** Контур квартиры крупно на фрагменте плана — пока нет объёмных картинок. */
-function UnitPlanCrop({ unit, fill }: { unit: ApartmentGeo; fill: string }) {
-  const plan = floorPlans.find((p) => p.floor === unit.floor);
-  if (!plan) return null;
-
-  // Кадрируем по габариту контура с запасом — так квартира занимает почти весь
-  // фрагмент независимо от её размера.
-  const pts = unit.poly.flat();
-  const xs = pts.map((p) => p[0]);
-  const ys = pts.map((p) => p[1]);
-  const pad = 0.02;
-  const x0 = Math.max(0, Math.min(...xs) - pad);
-  const x1 = Math.min(1, Math.max(...xs) + pad);
-  const y0 = Math.max(0, Math.min(...ys) - pad);
-  const y1 = Math.min(1, Math.max(...ys) + pad);
-  const vb = `${x0 * plan.width} ${y0 * plan.height} ${(x1 - x0) * plan.width} ${(y1 - y0) * plan.height}`;
-
+/**
+ * Нарезка квартиры с подписями комнат поверх. Подписи — DOM, а не пиксели:
+ * остаются чёткими при любом размере и не зависят от языка чертежа.
+ * Позиционируются от реального бокса картинки, а не контейнера — при
+ * object-contain они отличаются на величину полей.
+ */
+function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
   return (
-    <svg viewBox={vb} className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
-      <image
-        href={plan.image}
-        x={0}
-        y={0}
-        width={plan.width}
-        height={plan.height}
-        preserveAspectRatio="none"
+    <div className="relative flex w-full items-center justify-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={unitPlan(unit.id)}
+        alt={`Планировка квартиры ${unit.id}`}
+        className="max-h-[46vh] w-auto max-w-full object-contain sm:max-h-[400px]"
       />
-      {unit.poly.map((ring, i) => (
-        <polygon
-          key={i}
-          points={ring.map(([x, y]) => `${x * plan.width},${y * plan.height}`).join(" ")}
-          fill={fill}
-          fillOpacity={0.3}
-          stroke={fill}
-          strokeWidth={10}
-          strokeLinejoin="round"
-        />
-      ))}
-    </svg>
+    </div>
   );
 }
