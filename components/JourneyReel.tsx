@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { scenesBeforeInfra, scenesAfterInfra, finalScene, type Scene } from "@/data/scenes";
 import { infraItems, type InfraItem } from "@/data/infrastructure";
 import { infraIconMap } from "@/components/infraIcons";
+import { AmbassadorBlock } from "@/components/AmbassadorBlock";
 import { useUI } from "@/hooks/useLeadModal";
 import { Button } from "@/components/Button";
 import { ArrowRight } from "@/components/icons";
@@ -38,10 +39,22 @@ const FINAL_LEN = 1100; // scroll the final CTA screen stays pinned
 type Segment =
   | { kind: "video"; vIdx: number; scene: Scene; len: number }
   | { kind: "infra"; len: number }
+  | { kind: "ambassador"; len: number }
   | { kind: "final"; len: number };
 
+// Экран амбассадора встаёт сразу после сцены 02: зритель уже понял, что это за
+// объект, и подтверждение от лица ложится в нужный момент. Раньше — рано.
+const AMB_AT = 2;
+const AMB_LEN = 1300;
+
 const segments: Segment[] = [
-  ...scenesBeforeInfra.map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: s.scrollLength })),
+  ...scenesBeforeInfra
+    .slice(0, AMB_AT)
+    .map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: s.scrollLength })),
+  { kind: "ambassador" as const, len: AMB_LEN },
+  ...scenesBeforeInfra
+    .slice(AMB_AT)
+    .map((s, i) => ({ kind: "video" as const, vIdx: AMB_AT + i, scene: s, len: s.scrollLength })),
   { kind: "infra" as const, len: infraItems.length * INFRA_STEP },
   ...scenesAfterInfra.map((s, i) => ({
     kind: "video" as const,
@@ -89,7 +102,8 @@ function AnimatedJourney() {
   const trackRef = useRef<HTMLDivElement>(null);
   const textProgress = useMotionValue(0);
   const infraCenter = useMotionValue(0);
-  const [view, setView] = useState<{ kind: "video" | "infra" | "final"; idx: number }>({
+  const ambLayerRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<{ kind: "video" | "infra" | "ambassador" | "final"; idx: number }>({
     kind: "video",
     idx: 0,
   });
@@ -168,6 +182,7 @@ function AnimatedJourney() {
         textProgress.set(0);
         if (infraLayerRef.current) infraLayerRef.current.style.opacity = "0";
         if (frameRef.current) frameRef.current.style.opacity = "0";
+        if (ambLayerRef.current) ambLayerRef.current.style.opacity = "0";
         if (viewRef.current !== "v0") {
           viewRef.current = "v0";
           setView({ kind: "video", idx: 0 });
@@ -213,6 +228,7 @@ function AnimatedJourney() {
           infraLayerRef.current.style.zIndex = preview > 0 ? "15" : "30";
         }
         if (frameRef.current) frameRef.current.style.opacity = "0";
+        if (ambLayerRef.current) ambLayerRef.current.style.opacity = "0";
         if (preview > 0 && trackRef.current) {
           trackRef.current.style.transform = "translate3d(0,0,0)";
           infraCenter.set(0);
@@ -221,6 +237,29 @@ function AnimatedJourney() {
         if (viewRef.current !== "v" + seg.vIdx) {
           viewRef.current = "v" + seg.vIdx;
           setView({ kind: "video", idx: seg.vIdx });
+          setInFinal(false);
+        }
+      } else if (seg.kind === "ambassador") {
+        // Экран амбассадора. Фон — застывший последний кадр сцены 02: лента не
+        // проваливается в чёрное, портрет стоит на фоне башен.
+        showVideo(AMB_AT - 1);
+        escalate(AMB_AT);
+        seekIdx.current = AMB_AT - 1;
+        const av = videoRefs.current[AMB_AT - 1];
+        if (av?.duration) seekTime.current = av.duration - 0.05;
+        if (infraLayerRef.current) infraLayerRef.current.style.opacity = "0";
+        if (frameRef.current) frameRef.current.style.opacity = "0";
+        if (ambLayerRef.current) {
+          // Быстрый вход, длинное удержание, короткий выход.
+          const op = lp < 0.12 ? lp / 0.12 : lp > 0.9 ? (1 - lp) / 0.1 : 1;
+          ambLayerRef.current.style.opacity = String(Math.max(0, Math.min(1, op)));
+        }
+        // Оверлей сцены 02 ещё смонтирован, пока не отработает setView. С малым
+        // lp его заголовок вернулся бы в видимое состояние и мигнул — латчим 1.
+        textProgress.set(1);
+        if (viewRef.current !== "amb") {
+          viewRef.current = "amb";
+          setView({ kind: "ambassador", idx: AMB_AT - 1 });
           setInFinal(false);
         }
       } else if (seg.kind === "infra") {
@@ -256,6 +295,7 @@ function AnimatedJourney() {
           infraLayerRef.current.style.zIndex = "30";
         }
         if (frameRef.current) frameRef.current.style.opacity = String(frameOp);
+        if (ambLayerRef.current) ambLayerRef.current.style.opacity = "0";
         if (trackRef.current) {
           const door = trackRef.current.parentElement;
           const vw = door?.clientWidth ?? 0;
@@ -271,6 +311,7 @@ function AnimatedJourney() {
       } else {
         // Final screen — looping river behind the CTA. No scrub: just play & loop.
         if (infraLayerRef.current) infraLayerRef.current.style.opacity = "0";
+        if (ambLayerRef.current) ambLayerRef.current.style.opacity = "0";
         showVideo(RIVER_IDX);
         escalate(RIVER_IDX);
         seekIdx.current = -1; // do not seek the river
@@ -453,6 +494,20 @@ function AnimatedJourney() {
             {/* Elevator frame with transparent doorway, on top */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img ref={frameRef} src={FRAME} alt="" aria-hidden className="pointer-events-none absolute inset-0 z-10 h-full w-full object-cover" />
+          </div>
+        </div>
+
+        {/* Экран амбассадора — поверх замороженного кадра сцены 02. */}
+        <div ref={ambLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
+          <div className="absolute inset-0 bg-ink/80" aria-hidden />
+          <div
+            className="relative h-full w-full"
+            style={{
+              paddingTop: "calc(env(safe-area-inset-top) + 64px)",
+              paddingBottom: "calc(env(safe-area-inset-bottom) + 84px)",
+            }}
+          >
+            <AmbassadorBlock animate={false} />
           </div>
         </div>
       </div>
@@ -654,7 +709,13 @@ function DoorSlide({
 function StaticJourney() {
   return (
     <>
-      {allScenes.slice(0, INFRA_AT).map((s) => (
+      {allScenes.slice(0, AMB_AT).map((s) => (
+        <StaticScene key={s.id} scene={s} />
+      ))}
+      <section className="relative w-full bg-ink py-20" aria-label="Амбассадор проекта">
+        <AmbassadorBlock animate={false} />
+      </section>
+      {allScenes.slice(AMB_AT, INFRA_AT).map((s) => (
         <StaticScene key={s.id} scene={s} />
       ))}
       <section className="bg-white px-5 py-16" aria-label="Инфраструктура комплекса">

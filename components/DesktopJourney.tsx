@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { AmbassadorBlock } from "@/components/AmbassadorBlock";
 import {
   desktopBeforeInfra,
   desktopAfterInfra,
@@ -353,6 +354,29 @@ function DesktopFinal() {
 
 /* ───────────────────────────── Root ───────────────────────────── */
 
+/* ───────────────────────────── Ambassador ───────────────────────────── */
+
+/**
+ * Тот же кадр, что и в секции «district», но затемнённый: на мобиле экран
+ * амбассадора стоит на замороженном кадре той же сцены — держим единый вид.
+ */
+function DesktopAmbassador() {
+  return (
+    <section
+      className="relative h-screen min-h-[780px] w-full overflow-hidden bg-ink"
+      aria-label="Амбассадор проекта"
+    >
+      <ParallaxFrame src="/images/desktop/district.webp" alt="" className="absolute inset-0" />
+      <div className="pointer-events-none absolute inset-0 bg-ink/85" />
+      {/* pt-16 смещает оптический центр ниже прозрачной шапки — иначе на низких
+          экранах надпись «Амбассадор проекта» уезжает под логотип. */}
+      <div className="relative z-10 h-full w-full pt-16">
+        <AmbassadorBlock />
+      </div>
+    </section>
+  );
+}
+
 function Section({ section }: { section: DesktopSection }) {
   return section.layout === "full" ? (
     <FullSection section={section} />
@@ -362,11 +386,14 @@ function Section({ section }: { section: DesktopSection }) {
 }
 
 export function DesktopJourney() {
-  const [hero, ...rest] = desktopBeforeInfra;
+  const [hero, district, ...rest] = desktopBeforeInfra;
 
   return (
     <>
       <DesktopHero section={hero} />
+      <Section section={district} />
+      {/* Третий экран: зритель уже знает, что за объект — тут подтверждение. */}
+      <DesktopAmbassador />
       {rest.map((s) => (
         <Section key={s.id} section={s} />
       ))}
