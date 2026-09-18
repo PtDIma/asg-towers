@@ -25,11 +25,10 @@ export interface Ambassador {
 export const ambassador: Ambassador = {
   eyebrow: "Амбассадор проекта",
   name: "Хвича Кварацхелия",
-  role: "Футболист сборной Грузии. Родился в Тбилиси в 2001 году.",
+  role: "Футболист сборной Грузии.",
   quote: "Я всегда беру Грузию с собой. Всех её людей.",
   quoteSource: "The Players’ Tribune",
-  note:
-    "Тбилисец, который играет в Европе и возвращается домой. ASG Towers — про тот же город: место, в которое хочется возвращаться.",
+  note: "ASG Towers — место, в которое хочется возвращаться.",
   photo: "/images/ambassador/khvicha-avatar.webp",
   photoAlt: "Хвича Кварацхелия — амбассадор проекта ASG Towers",
 };
