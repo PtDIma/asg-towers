@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/lib/i18n";
+import { LangSwitcher } from "@/components/LangSwitcher";
 
 export function Header() {
   const { openLead } = useUI();
+  const tr = useT();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function Header() {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
           }}
-          aria-label="ASG Towers — на главную"
+          aria-label={tr("ASG Towers — на главную")}
           className="flex items-baseline gap-1.5 cursor-pointer"
         >
           <span className="text-[15px] font-semibold tracking-[-0.02em] text-white">
@@ -52,13 +55,14 @@ export function Header() {
           </span>
         </a>
 
-        <nav className="flex items-center gap-1.5" aria-label="Основная навигация">
+        <nav className="flex items-center gap-1.5" aria-label={tr("Основная навигация")}>
+          <LangSwitcher />
           <button
             onClick={toContact}
-            aria-label="Связаться с менеджером"
+            aria-label={tr("Связаться с менеджером")}
             className="min-h-[40px] rounded-full border border-gold/55 bg-gold/10 px-4 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-gold/20 active:scale-[0.97] cursor-pointer"
           >
-            Связаться
+            {tr("Связаться")}
           </button>
         </nav>
       </div>

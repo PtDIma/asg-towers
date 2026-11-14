@@ -18,7 +18,7 @@ const config: Config = {
         "ink-text": "#161616",
       },
       fontFamily: {
-        sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
+        sans: ["var(--font-manrope)", "var(--font-georgian)", "system-ui", "sans-serif"],
       },
       letterSpacing: {
         eyebrow: "0.16em",

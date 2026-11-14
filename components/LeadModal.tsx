@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { useUI } from "@/hooks/useLeadModal";
 import { LeadForm } from "@/components/LeadForm";
 import { Close, Check } from "@/components/icons";
+import { useT } from "@/lib/i18n";
 
 export function LeadModal() {
   const { isLeadOpen, leadInterest, leadUnitId, closeLead } = useUI();
+  const tr = useT();
   const [success, setSuccess] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -72,18 +74,17 @@ export function LeadModal() {
                     id="lead-title"
                     className="text-[26px] font-semibold tracking-tightest"
                   >
-                    {success ? "Заявка отправлена" : "Получить расчет"}
+                    {tr(success ? "Заявка отправлена" : "Получить расчет")}
                   </h2>
                   {!success && (
                     <p className="mt-2 max-w-[40ch] text-[14px] leading-snug text-white/60">
-                      Оставьте контакт — менеджер отправит планировку, цену,
-                      условия рассрочки и прогноз доходности.
+                      {tr("Оставьте контакт — менеджер отправит планировку, цену, условия рассрочки и прогноз доходности.")}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={closeLead}
-                  aria-label="Закрыть форму"
+                  aria-label={tr("Закрыть форму")}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-white/70 transition-colors hover:bg-white/10 cursor-pointer"
                 >
                   <Close className="h-5 w-5" />
@@ -108,6 +109,7 @@ export function LeadModal() {
 }
 
 function SuccessState({ onClose }: { onClose: () => void }) {
+  const tr = useT();
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -119,13 +121,13 @@ function SuccessState({ onClose }: { onClose: () => void }) {
         <Check className="h-8 w-8" />
       </div>
       <p className="mt-6 max-w-[34ch] text-[15px] leading-relaxed text-white/70">
-        Мы свяжемся с вами и отправим подробный расчет по выбранному объекту.
+        {tr("Мы свяжемся с вами и отправим подробный расчет по выбранному объекту.")}
       </p>
       <button
         onClick={onClose}
         className="mt-8 flex min-h-[50px] w-full items-center justify-center rounded-full bg-gold text-[15px] font-semibold text-ink transition-transform duration-200 active:scale-[0.98] cursor-pointer"
       >
-        Готово
+        {tr("Готово")}
       </button>
     </motion.div>
   );

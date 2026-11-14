@@ -5,9 +5,11 @@ import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 import { contacts, handover } from "@/data/contacts";
+import { useT } from "@/lib/i18n";
 
 export function Footer() {
   const { openLead } = useUI();
+  const tr = useT();
 
   const contact = () => {
     trackEvent("cta_click", { label: "footer:contact" });
@@ -19,7 +21,7 @@ export function Footer() {
       id="contact"
       className="relative w-full border-t border-white/10 bg-ink px-5 pt-16 text-white lg:px-12 lg:pt-24 2xl:px-20"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 48px)" }}
-      aria-label="Контакты"
+      aria-label={tr("Контакты")}
     >
       {/* 460px column keeps the phone-shaped layout for the mobile reel (which
           runs up to 1024); from lg the desktop cut takes over and the footer
@@ -34,17 +36,16 @@ export function Footer() {
               </span>
             </div>
             <h2 className="mt-6 max-w-[18ch] text-balance text-[clamp(28px,8vw,42px)] font-semibold leading-[1.0] tracking-tightest lg:text-[clamp(38px,3.2vw,56px)]">
-              Вертикальный город у Куры.
+              {tr("Вертикальный город у Куры.")}
             </h2>
             <p className="mt-4 max-w-[42ch] text-[15px] leading-[1.5] text-gray-text lg:mt-6 lg:text-[17px]">
-              Тбилиси, первая линия у реки Кура. Жилая башня, офисы, отель, коммерция
-              и инфраструктура в одном комплексе.
+              {tr("Тбилиси, первая линия у реки Кура. Жилая башня, офисы, отель, коммерция и инфраструктура в одном комплексе.")}
             </p>
           </div>
 
           <div className="mt-8 lg:mt-3 lg:shrink-0">
-            <Button variant="primary" onClick={contact} aria-label="Связаться с менеджером">
-              Связаться с менеджером
+            <Button variant="primary" onClick={contact} aria-label={tr("Связаться с менеджером")}>
+              {tr("Связаться с менеджером")}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -52,19 +53,19 @@ export function Footer() {
 
         <dl className="mt-12 grid gap-6 border-t border-white/10 pt-8 text-[15px] sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
           <div>
-            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Телефон</dt>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Телефон")}</dt>
             <dd className="mt-2">
               <a href={contacts.phoneHref} className="hover:text-gold">{contacts.phone}</a>
             </dd>
           </div>
           <div>
-            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Почта</dt>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Почта")}</dt>
             <dd className="mt-2">
               <a href={`mailto:${contacts.email}`} className="hover:text-gold">{contacts.email}</a>
             </dd>
           </div>
           <div>
-            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Офис продаж</dt>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Офис продаж")}</dt>
             <dd className="mt-2">
               <a href={contacts.mapHref} target="_blank" rel="noopener noreferrer" className="hover:text-gold">
                 {contacts.address}
@@ -72,8 +73,8 @@ export function Footer() {
             </dd>
           </div>
           <div>
-            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Сдача объекта</dt>
-            <dd className="mt-2">{handover}</dd>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Сдача объекта")}</dt>
+            <dd className="mt-2">{tr(handover)}</dd>
           </div>
         </dl>
 

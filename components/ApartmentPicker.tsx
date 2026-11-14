@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   facadeBands,
   facadeImage,
@@ -21,6 +21,7 @@ import {
 import { handover } from "@/data/contacts";
 import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/Button";
 import { ArrowRight, ArrowDown, Close } from "@/components/icons";
 
@@ -37,6 +38,7 @@ const status = {
 } satisfies Record<UnitStatus, { fill: string; label: string; chip: string }>;
 
 export function ApartmentPicker() {
+  const tr = useT();
   const [floor, setFloor] = useState<number | null>(null);
   const [unitId, setUnitId] = useState<string | null>(null);
   const [commercial, setCommercial] = useState<Map<string, UnitCommercial>>(new Map());
@@ -80,7 +82,7 @@ export function ApartmentPicker() {
 
         {sheetError && (
           <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[13px] text-white/60">
-            Цены временно недоступны — планировки и площади показаны, стоимость уточните у менеджера.
+            {tr("Цены временно недоступны — планировки и площади показаны, стоимость уточните у менеджера.")}
           </p>
         )}
 
@@ -124,24 +126,25 @@ function Breadcrumb({
   onHome: () => void;
   onFloor: () => void;
 }) {
+  const tr = useT();
   const crumb = "text-[11px] uppercase tracking-[0.18em] transition-colors";
   return (
-    <nav className="flex flex-wrap items-center gap-2.5" aria-label="Навигация по выбору">
+    <nav className="flex flex-wrap items-center gap-2.5" aria-label={tr("Навигация по выбору")}>
       <button onClick={onHome} className={`${crumb} cursor-pointer ${floor ? "text-white/40 hover:text-white" : "text-gold"}`}>
-        Блок A
+        {tr("Блок A")}
       </button>
       {floor && (
         <>
           <span className="text-white/20">—</span>
           <button onClick={onFloor} className={`${crumb} cursor-pointer ${unitId ? "text-white/40 hover:text-white" : "text-gold"}`}>
-            2D-план · {floor} этаж
+            {tr("2D-план · {n} этаж", { n: floor })}
           </button>
         </>
       )}
       {unitId && (
         <>
           <span className="text-white/20">—</span>
-          <span className={`${crumb} text-gold`}>Квартира {unitId}</span>
+          <span className={`${crumb} text-gold`}>{tr("Квартира {id}", { id: unitId })}</span>
         </>
       )}
     </nav>
@@ -151,9 +154,10 @@ function Breadcrumb({
 /* ───────────────────────────── Панель статусов ───────────────────────────── */
 
 function StatusLegend({ counts }: { counts?: Record<UnitStatus, number> }) {
+  const tr = useT();
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Статус</p>
+      <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Статус")}</p>
       <ul className="mt-4 flex flex-col gap-2.5">
         {(Object.keys(statusLabels) as UnitStatus[]).map((k) => (
           <li
@@ -162,7 +166,7 @@ function StatusLegend({ counts }: { counts?: Record<UnitStatus, number> }) {
           >
             <span className="flex items-center gap-2.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: status[k].fill }} />
-              <span className="text-white/80">{statusLabels[k]}</span>
+              <span className="text-white/80">{tr(statusLabels[k])}</span>
             </span>
             {counts && <span className="text-white/40 tabular-nums">{counts[k]}</span>}
           </li>
@@ -190,6 +194,7 @@ function FacadeStep({
   onPick: (floor: number) => void;
   commercial: Map<string, UnitCommercial>;
 }) {
+  const tr = useT();
   const [hover, setHover] = useState<number | null>(null);
   // Подсказка при входе: подсветка один раз пробегает по этажам снизу вверх —
   // сразу видно, что фасад кликабельный. Первое наведение её останавливает.
@@ -213,10 +218,10 @@ function FacadeStep({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease }}
       className="mt-4"
-      aria-label="Выбор этажа"
+      aria-label={tr("Выбор этажа")}
     >
       <h1 className="text-[clamp(32px,4vw,58px)] font-semibold leading-[1.02] tracking-tightest">
-        Выберите этаж
+        {tr("Выберите этаж")}
       </h1>
 
       <div className="mt-9 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
@@ -225,7 +230,7 @@ function FacadeStep({
             Контейнер обжимает картинку (w-fit), полосы позиционируются от неё. */}
         <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-black/40 lg:mx-auto lg:w-fit">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={facadeImage} alt="Фасад левой башни" className="block w-full lg:h-[calc(100svh-200px)] lg:min-h-[560px] lg:w-auto" />
+          <img src={facadeImage} alt={tr("Фасад левой башни")} className="block w-full lg:h-[calc(100svh-200px)] lg:min-h-[560px] lg:w-auto" />
 
           {facadeBands.map((b) => {
             const on = active === b.floor;
@@ -240,7 +245,7 @@ function FacadeStep({
                   setHover(b.floor);
                 }}
                 onMouseLeave={() => setHover(null)}
-                aria-label={`${b.floor} этаж, свободно ${free}`}
+                aria-label={tr("{n} этаж, свободно {free}", { n: b.floor, free })}
                 className="group absolute cursor-pointer"
                 style={{
                   left: `${b.x * 100}%`,
@@ -268,7 +273,7 @@ function FacadeStep({
                     boxShadow: on ? "0 4px 18px rgba(200,169,106,0.4)" : "none",
                   }}
                 >
-                  {on ? `${b.floor} этаж · своб. ${free}` : b.floor}
+                  {on ? tr("{n} этаж · своб. {free}", { n: b.floor, free }) : b.floor}
                 </span>
               </button>
             );
@@ -279,14 +284,14 @@ function FacadeStep({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
             </span>
-            Нажмите на этаж, чтобы открыть план
+            {tr("Нажмите на этаж, чтобы открыть план")}
           </span>
         </div>
 
         {/* Панель */}
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Выберите этаж</p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Выберите этаж")}</p>
             <ul className="mt-4 grid grid-cols-3 gap-2">
               {facadeBands.map((b) => {
                 const plan = floorPlans.find((p) => p.floor === b.floor);
@@ -297,7 +302,7 @@ function FacadeStep({
                       onClick={() => onPick(b.floor)}
                       onMouseEnter={() => setHover(b.floor)}
                       onMouseLeave={() => setHover(null)}
-                      aria-label={`${b.floor} этаж, свободно ${free} из ${plan?.units.length ?? 0}`}
+                      aria-label={tr("{n} этаж, свободно {free} из {total}", { n: b.floor, free, total: plan?.units.length ?? 0 })}
                       className={`w-full cursor-pointer rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ${
                         hover === b.floor
                           ? "border-gold/60 bg-gold/[0.12]"
@@ -306,7 +311,7 @@ function FacadeStep({
                     >
                       <span className="block text-[16px] font-semibold leading-none">{b.floor}</span>
                       <span className="mt-1.5 block text-[11px] leading-none text-white/45">
-                        своб. {free}/{plan?.units.length ?? 0}
+                        {tr("своб. {free}/{total}", { free, total: plan?.units.length ?? 0 })}
                       </span>
                     </button>
                   </li>
@@ -344,6 +349,7 @@ function FloorStep({
   onFloorChange: (f: number) => void;
   onBack: () => void;
 }) {
+  const tr = useT();
   const [hover, setHover] = useState<string | null>(null);
 
   return (
@@ -352,18 +358,18 @@ function FloorStep({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease }}
       className="mt-4"
-      aria-label={`План ${plan.floor} этажа`}
+      aria-label={tr("План {n} этажа", { n: plan.floor })}
     >
       <button
         onClick={onBack}
         className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[12px] uppercase tracking-[0.14em] text-white/70 transition-colors hover:border-gold/50 hover:text-white"
       >
         <ArrowRight className="h-3.5 w-3.5 rotate-180" />
-        К зданию
+        {tr("К зданию")}
       </button>
 
       <h1 className="mt-5 text-[clamp(30px,3.6vw,52px)] font-semibold leading-[1.02] tracking-tightest">
-        {plan.floor} этаж
+        {tr("{n} этаж", { n: plan.floor })}
       </h1>
 
       <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
@@ -380,7 +386,7 @@ function FloorStep({
 
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Этаж</p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Этаж")}</p>
             <div className="mt-4 grid grid-cols-5 gap-2">
               {[...floorPlans].reverse().map((p) => (
                 <button
@@ -415,6 +421,34 @@ function FloorStep({
 }
 
 /** План с контурами квартир: SVG поверх растра, координаты — доли изображения. */
+/**
+ * Сколько места вокруг якоря метки внутри контура квартиры (доли плана):
+ * ближайшие пересечения горизонтали и вертикали через якорь с контуром.
+ * Метка центрирована на якоре, поэтому берём меньшую из сторон.
+ */
+function labelRoom(u: ApartmentGeo, W: number, H: number) {
+  const ring = u.poly[0];
+  const x0 = u.nx * W;
+  const y0 = u.ny * H;
+  let left = Infinity, right = Infinity, up = Infinity, down = Infinity;
+  for (let i = 0; i < ring.length; i++) {
+    const [ax, ay] = ring[i];
+    const [bx, by] = ring[(i + 1) % ring.length];
+    const x1 = ax * W, y1 = ay * H, x2 = bx * W, y2 = by * H;
+    if ((y1 - y0) * (y2 - y0) <= 0 && y1 !== y2) {
+      const x = x1 + ((y0 - y1) / (y2 - y1)) * (x2 - x1);
+      if (x <= x0) left = Math.min(left, x0 - x);
+      else right = Math.min(right, x - x0);
+    }
+    if ((x1 - x0) * (x2 - x0) <= 0 && x1 !== x2) {
+      const y = y1 + ((x0 - x1) / (x2 - x1)) * (y2 - y1);
+      if (y <= y0) up = Math.min(up, y0 - y);
+      else down = Math.min(down, y - y0);
+    }
+  }
+  return { w: (2 * Math.min(left, right)) / W, h: (2 * Math.min(up, down)) / H };
+}
+
 function PlanSvg({
   plan,
   commercial,
@@ -430,85 +464,143 @@ function PlanSvg({
   onHover: (id: string | null) => void;
   onPick: (id: string) => void;
 }) {
+  const tr = useT();
   const { width: W, height: H } = plan;
 
-  return (
-    <div className="relative mx-auto w-full" style={{ maxWidth: 560 }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={plan.image} alt={`Планировка ${plan.floor} этажа`} className="block w-full" />
+  // Метки не должны залезать на соседей: каждую ужимаем до места внутри своей
+  // квартиры. Меряем естественный размер (offset* не видит transform) и ширину плана.
+  const boxRef = useRef<HTMLDivElement>(null);
+  const labelRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [planW, setPlanW] = useState(0);
+  const [fit, setFit] = useState<Record<string, number>>({});
+  const rooms = useMemo(() => new Map(plan.units.map((u) => [u.id, labelRoom(u, W, H)])), [plan, W, H]);
 
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="absolute inset-0 h-full w-full"
-        role="group"
-        aria-label="Квартиры на плане"
-      >
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setPlanW(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!planW) return;
+    const planH = (planW * H) / W;
+    const next: Record<string, number> = {};
+    for (const u of plan.units) {
+      const el = labelRefs.current[u.id];
+      const r = rooms.get(u.id);
+      if (!el || !r) continue;
+      const k = Math.min(1, (0.9 * r.w * planW) / el.offsetWidth, (0.9 * r.h * planH) / el.offsetHeight);
+      next[u.id] = Math.max(0.45, k);
+    }
+    setFit(next);
+  }, [planW, plan, rooms, commercial, W, H, tr]);
+
+  return (
+    <div className="mx-auto w-full" style={{ maxWidth: 560 }}>
+      <div ref={boxRef} className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={plan.image} alt={tr("Планировка {n} этажа", { n: plan.floor })} className="block w-full" />
+
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="absolute inset-0 h-full w-full"
+          role="group"
+          aria-label={tr("Квартиры на плане")}
+        >
+          {plan.units.map((u) => {
+            const st = commercial.get(u.id)?.status ?? "available";
+            const c = status[st];
+            const on = hover === u.id || activeId === u.id;
+            return (
+              <g
+                key={u.id}
+                className="cursor-pointer"
+                onMouseEnter={() => onHover(u.id)}
+                onMouseLeave={() => onHover(null)}
+                onClick={() => onPick(u.id)}
+                role="button"
+                tabIndex={0}
+                aria-label={tr("Квартира {id}, {area} м², {status}", { id: u.id, area: u.area, status: tr(statusLabels[st]) })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onPick(u.id);
+                  }
+                }}
+              >
+                {u.poly.map((ring, i) => (
+                  <polygon
+                    key={i}
+                    points={ring.map(([x, y]) => `${x * W},${y * H}`).join(" ")}
+                    fill={c.fill}
+                    fillOpacity={on ? 0.62 : 0.34}
+                    stroke={c.fill}
+                    strokeWidth={on ? 9 : 5}
+                    strokeLinejoin="round"
+                    style={{ transition: "fill-opacity 160ms, stroke-width 160ms" }}
+                  />
+                ))}
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Метки — обычным DOM: так текст не масштабируется вместе с планом */}
         {plan.units.map((u) => {
-          const st = commercial.get(u.id)?.status ?? "available";
-          const c = status[st];
+          const info = commercial.get(u.id);
+          const st = info?.status ?? "available";
           const on = hover === u.id || activeId === u.id;
+          const m2 = st !== "sold" ? info?.priceM2 : undefined;
           return (
-            <g
+            <button
               key={u.id}
-              className="cursor-pointer"
+              ref={(el) => {
+                labelRefs.current[u.id] = el;
+              }}
               onMouseEnter={() => onHover(u.id)}
               onMouseLeave={() => onHover(null)}
               onClick={() => onPick(u.id)}
-              role="button"
-              tabIndex={0}
-              aria-label={`Квартира ${u.id}, ${u.area} м², ${statusLabels[st]}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onPick(u.id);
-                }
+              tabIndex={-1}
+              aria-hidden
+              className="absolute cursor-pointer whitespace-nowrap rounded-[10px] px-2 py-1 text-center leading-none shadow-sm transition-transform duration-150"
+              style={{
+                left: `${u.nx * 100}%`,
+                top: `${u.ny * 100}%`,
+                background: on ? "#0A0A0B" : "rgba(255,255,255,0.94)",
+                color: on ? "#fff" : "#111",
+                // При наведении метка вырастает до читаемого размера — поверх соседей можно.
+                transform: `translate(-50%,-50%) scale(${on ? Math.max(1, fit[u.id] ?? 1) * 1.06 : fit[u.id] ?? 1})`,
+                zIndex: on ? 10 : 1,
               }}
             >
-              {u.poly.map((ring, i) => (
-                <polygon
-                  key={i}
-                  points={ring.map(([x, y]) => `${x * W},${y * H}`).join(" ")}
-                  fill={c.fill}
-                  fillOpacity={on ? 0.62 : 0.34}
-                  stroke={c.fill}
-                  strokeWidth={on ? 9 : 5}
-                  strokeLinejoin="round"
-                  style={{ transition: "fill-opacity 160ms, stroke-width 160ms" }}
-                />
-              ))}
-            </g>
+              <span className="block text-[11px] font-bold">{u.id}</span>
+              <span className="mt-0.5 block text-[9.5px] font-medium opacity-70">
+                {u.area} {tr("м²")}
+              </span>
+              {m2 && (
+                <span className="mt-0.5 block text-[9.5px] font-semibold" style={{ color: on ? "#E6D3A8" : "#8A6A2E" }}>
+                  ${m2.toLocaleString("ru-RU")}/{tr("м²")}
+                </span>
+              )}
+            </button>
           );
         })}
-      </svg>
+      </div>
 
-      {/* Метки — обычным DOM: так текст не масштабируется вместе с планом */}
-      {plan.units.map((u) => {
-        const st = commercial.get(u.id)?.status ?? "available";
-        const on = hover === u.id || activeId === u.id;
-        return (
-          <button
-            key={u.id}
-            onMouseEnter={() => onHover(u.id)}
-            onMouseLeave={() => onHover(null)}
-            onClick={() => onPick(u.id)}
-            tabIndex={-1}
-            aria-hidden
-            className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer whitespace-nowrap rounded-full px-2 py-1 text-center leading-none shadow-sm transition-transform duration-150"
-            style={{
-              left: `${u.nx * 100}%`,
-              top: `${u.ny * 100}%`,
-              background: on ? "#0A0A0B" : "rgba(255,255,255,0.94)",
-              color: on ? "#fff" : "#111",
-              transform: `translate(-50%,-50%) scale(${on ? 1.08 : 1})`,
-            }}
-          >
-            <span className="block text-[11px] font-bold">{u.id}</span>
-            <span className="mt-0.5 block text-[9.5px] font-medium opacity-70">
-              {u.area} м²
-            </span>
-          </button>
-        );
-      })}
+      {/* Река под планом: нижние квартиры смотрят на Куру — так это видно сразу. */}
+      <svg viewBox="0 0 560 64" className="block w-full" aria-label={tr("Река Кура")} role="img">
+        <path
+          d="M0 14 C 50 4, 90 24, 140 14 S 230 4, 280 14 S 370 24, 420 14 S 510 4, 560 14 L 560 64 L 0 64 Z"
+          fill="#B9DBF2"
+        />
+        <path d="M0 30 C 60 22, 100 38, 160 30 S 260 22, 320 30 S 440 38, 560 28" fill="none" stroke="#86BFE6" strokeWidth="2" strokeLinecap="round" />
+        <path d="M30 46 C 80 40, 120 52, 170 46 M300 48 C 350 42, 400 54, 450 47" fill="none" stroke="#9ACBEC" strokeWidth="2" strokeLinecap="round" />
+        <text x="280" y="44" textAnchor="middle" fontSize="12" letterSpacing="3" fill="#3A7FAE" fontWeight="600">
+          {tr("КУРА")}
+        </text>
+      </svg>
     </div>
   );
 }
@@ -526,10 +618,11 @@ function UnitList({
   onHover: (id: string | null) => void;
   onPick: (id: string) => void;
 }) {
+  const tr = useT();
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">
-        Квартиры этажа
+        {tr("Квартиры этажа")}
       </p>
       <ul className="mt-4 flex flex-col gap-1.5">
         {plan.units.map((u) => {
@@ -554,10 +647,10 @@ function UnitList({
                   {u.id}
                 </span>
                 <span className="shrink-0 text-[13px] text-white/60 tabular-nums">
-                  {u.area} м²
+                  {u.area} {tr("м²")}
                 </span>
                 <span className="ml-auto text-[13px] text-white/80 tabular-nums">
-                  {st === "sold" ? "—" : formatPrice(info?.price)}
+                  {st === "sold" ? "—" : tr(formatPrice(info?.price))}
                 </span>
               </button>
             </li>
@@ -579,6 +672,7 @@ function UnitSheet({
   info?: UnitCommercial;
   onClose: () => void;
 }) {
+  const tr = useT();
   const { openLead } = useUI();
   const st = info?.status ?? "available";
   const sold = st === "sold";
@@ -607,7 +701,7 @@ function UnitSheet({
       >
         <button
           onClick={onClose}
-          aria-label="Закрыть"
+          aria-label={tr("Закрыть")}
           className="absolute right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition-colors hover:bg-black/80"
         >
           <Close className="h-4 w-4" />
@@ -619,7 +713,7 @@ function UnitSheet({
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={info.renderUrl}
-                alt={`Квартира ${unit.id} в объёме`}
+                alt={tr("Квартира {id} в объёме", { id: unit.id })}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
@@ -631,43 +725,43 @@ function UnitSheet({
 
           <div className="p-6 sm:p-8">
             <span className={`inline-block rounded-full px-3 py-1 text-[12px] ${status[st].chip}`}>
-              {statusLabels[st]}
+              {tr(statusLabels[st])}
             </span>
             <h2 className="mt-4 text-[32px] font-semibold leading-none tracking-tightest">
-              Квартира {unit.id}
+              {tr("Квартира {id}", { id: unit.id })}
             </h2>
             <p className="mt-2 text-[14px] text-white/50">
-              {unit.floor} этаж · сдача {handover}
+              {tr("{n} этаж · сдача {handover}", { n: unit.floor, handover: tr(handover) })}
             </p>
 
             <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/10 pt-6 text-[14px]">
               <div>
-                <dt className="text-white/40">Общая площадь</dt>
+                <dt className="text-white/40">{tr("Общая площадь")}</dt>
                 <dd className="mt-1 text-[21px] font-semibold">
-                  {unit.area} м²
+                  {unit.area} {tr("м²")}
                 </dd>
               </div>
               <div>
-                <dt className="text-white/40">Стоимость</dt>
+                <dt className="text-white/40">{tr("Стоимость")}</dt>
                 <dd className="mt-1 text-[21px] font-semibold">
-                  {sold ? "—" : formatPrice(info?.price)}
+                  {sold ? "—" : tr(formatPrice(info?.price))}
                 </dd>
               </div>
               {info?.rooms && (
                 <div>
-                  <dt className="text-white/40">Комнат</dt>
-                  <dd className="mt-1">{info.rooms}</dd>
+                  <dt className="text-white/40">{tr("Комнат")}</dt>
+                  <dd className="mt-1">{tr(info.rooms)}</dd>
                 </div>
               )}
               {info?.view && (
                 <div>
-                  <dt className="text-white/40">Вид</dt>
-                  <dd className="mt-1">{info.view}</dd>
+                  <dt className="text-white/40">{tr("Вид")}</dt>
+                  <dd className="mt-1">{tr(info.view)}</dd>
                 </div>
               )}
               {!sold && (info?.priceM2 || info?.price) && (
                 <div>
-                  <dt className="text-white/40">За м²</dt>
+                  <dt className="text-white/40">{tr("За м²")}</dt>
                   <dd className="mt-1">
                     {/* Колонка price_m2 — источник истины, если её нет — считаем сами. */}
                     {formatPrice(
@@ -680,7 +774,7 @@ function UnitSheet({
 
             {sold && (
               <p className="mt-6 text-[14px] text-white/55">
-                Эта квартира продана. Подберём похожую — оставьте заявку.
+                {tr("Эта квартира продана. Подберём похожую — оставьте заявку.")}
               </p>
             )}
 
@@ -693,7 +787,7 @@ function UnitSheet({
                 openLead({ interest: "apartment", unitId: unit.id, source: "unit-card" });
               }}
             >
-              {sold ? "Подобрать похожую" : "Оставить заявку"}
+              {tr(sold ? "Подобрать похожую" : "Оставить заявку")}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -715,6 +809,7 @@ function UnitSheet({
  * а 2D остаётся под рукой для тех, кто читает чертёж.
  */
 function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
+  const tr = useT();
   const src3d = unitPlan3d(unit);
   const [mode, setMode] = useState<"3d" | "2d">(src3d ? "3d" : "2d");
 
@@ -753,8 +848,8 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
         src={mode === "3d" && src3d ? src3d : unitPlan(unit)}
         alt={
           mode === "3d" && src3d
-            ? `Квартира ${unit.id} — объёмная планировка`
-            : `Квартира ${unit.id} — чертёж`
+            ? tr("Квартира {id} — объёмная планировка", { id: unit.id })
+            : tr("Квартира {id} — чертёж", { id: unit.id })
         }
         className="max-h-[42vh] w-auto max-w-full object-contain sm:max-h-[370px]"
       />

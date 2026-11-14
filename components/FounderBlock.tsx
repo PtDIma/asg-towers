@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { founder } from "@/data/founder";
+import { useLang, useT } from "@/lib/i18n";
 
 /**
  * Содержимое экрана соучредителя. Фон даёт хозяин блока: в мобильной ленте это
@@ -11,6 +12,8 @@ import { founder } from "@/data/founder";
  * мылит. Придёт кадр из договора в высоком разрешении — блок можно раскрыть.
  */
 export function FounderBlock({ animate = true }: { animate?: boolean }) {
+  const tr = useT();
+  const { lang } = useLang();
   const rise = animate
     ? {
         initial: { opacity: 0, y: 18 },
@@ -27,7 +30,7 @@ export function FounderBlock({ animate = true }: { animate?: boolean }) {
         className="flex w-full max-w-[560px] flex-col items-center"
       >
         <p className="text-[11px] uppercase tracking-eyebrow text-gold lg:text-[12px]">
-          {founder.eyebrow}
+          {tr(founder.eyebrow)}
         </p>
 
         <div className="relative mt-4 lg:mt-8">
@@ -35,7 +38,7 @@ export function FounderBlock({ animate = true }: { animate?: boolean }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={founder.photo}
-            alt={founder.photoAlt}
+            alt={tr(founder.photoAlt)}
             width={400}
             height={643}
             loading="lazy"
@@ -45,27 +48,27 @@ export function FounderBlock({ animate = true }: { animate?: boolean }) {
         </div>
 
         <p className="mt-4 text-[20px] font-semibold tracking-tightest text-white lg:text-[24px]">
-          {founder.name}
+          {tr(founder.name)}
         </p>
         <p className="mt-1.5 text-[13px] leading-[1.45] text-gray-text lg:text-[14px]">
-          {founder.role}
+          {tr(founder.role)}
         </p>
 
         <div className="mt-5 h-px w-10 bg-white/20 lg:mt-9" aria-hidden />
 
         <blockquote className="mt-5 lg:mt-9">
           <p className="text-balance text-[24px] font-semibold leading-[1.15] tracking-tightest text-white lg:text-[38px]">
-            «{founder.quote}»
+            {lang === "ru" ? "«" : "“"}{tr(founder.quote)}{lang === "ru" ? "»" : "”"}
           </p>
           {founder.quoteSource && (
             <footer className="mt-3.5 text-[11px] uppercase tracking-[0.12em] text-white/40 lg:text-[12px]">
-              {founder.name}, {founder.quoteSource}
+              {tr(founder.name)}, {founder.quoteSource}
             </footer>
           )}
         </blockquote>
 
         <p className="mt-5 max-w-[38ch] text-[14px] leading-[1.5] text-white/[0.72] lg:mt-10 lg:text-[16px]">
-          {founder.note}
+          {tr(founder.note)}
         </p>
       </motion.div>
     </div>

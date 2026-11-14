@@ -4,10 +4,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/lib/i18n";
 import { ArrowRight } from "@/components/icons";
 
 export function StickyCTA() {
   const { isLeadOpen, inFinal } = useUI();
+  const tr = useT();
   const [nearContact, setNearContact] = useState(false);
 
   useEffect(() => {
@@ -41,15 +43,15 @@ export function StickyCTA() {
         >
           <button
             onClick={onClick}
-            aria-label="Выбрать планировку — квартиры, офисы, коммерция"
+            aria-label={tr("Выбрать планировку — квартиры, офисы, коммерция")}
             className="flex h-[56px] w-full items-center justify-between rounded-full border border-gold-soft bg-[rgba(5,5,5,0.72)] px-5 backdrop-blur-xl transition-transform duration-200 ease-luxe active:scale-[0.98] cursor-pointer"
           >
             <span className="flex flex-col items-start leading-tight">
               <span className="text-[15px] font-semibold text-white">
-                Выбрать планировку
+                {tr("Выбрать планировку")}
               </span>
               <span className="text-[11px] tracking-wide text-gold/80">
-                квартиры · офисы · коммерция
+                {tr("квартиры · офисы · коммерция")}
               </span>
             </span>
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-ink">

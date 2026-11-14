@@ -17,6 +17,7 @@ import { Button } from "@/components/Button";
 import { ArrowRight } from "@/components/icons";
 import type { LeadInterest } from "@/lib/lead";
 import { trackEvent } from "@/lib/analytics";
+import { useT } from "@/lib/i18n";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const INFRA_STEP = 600; // scroll px per infra card
@@ -103,6 +104,7 @@ export function JourneyReel({ wide = false }: { wide?: boolean }) {
 /* ───────────────────────────── Animated ───────────────────────────── */
 
 function AnimatedJourney({ wide }: { wide: boolean }) {
+  const tr = useT();
   const sectionRef = useRef<HTMLElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const infraLayerRef = useRef<HTMLDivElement>(null);
@@ -391,7 +393,7 @@ function AnimatedJourney({ wide }: { wide: boolean }) {
       ref={sectionRef}
       id="reel-journey"
       className="relative h-[100svh] w-full overflow-hidden bg-ink"
-      aria-label="ASG Towers — маршрут"
+      aria-label={tr("ASG Towers — маршрут")}
     >
       {/* Desktop ambient backdrop */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -542,6 +544,7 @@ function VideoOverlay({
   localProgress: MotionValue<number>;
   fadeOnExit: boolean;
 }) {
+  const tr = useT();
   const endsWhite = scene.theme === "light-transition";
   const exitOpacity = useTransform(localProgress, [0.82, 0.98], [1, 0]);
   const exitY = useTransform(localProgress, [0.82, 0.98], [0, -18]);
@@ -572,20 +575,20 @@ function VideoOverlay({
           <div className="max-w-[34ch] lg:max-w-[820px]">
             <Line delay={0}>
               <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white lg:text-[clamp(48px,4.6vw,84px)]">
-                {scene.title}
+                {tr(scene.title)}
               </h2>
             </Line>
             <Line delay={0.24}>
-              <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78] lg:mt-6 lg:max-w-[52ch] lg:text-[19px]">{scene.description}</p>
+              <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78] lg:mt-6 lg:max-w-[52ch] lg:text-[19px]">{tr(scene.description)}</p>
             </Line>
             {scene.secondaryText && (
               <Line delay={0.32}>
-                <p className="mt-3 text-[14px] leading-[1.45] text-gray-text">{scene.secondaryText}</p>
+                <p className="mt-3 text-[14px] leading-[1.45] text-gray-text">{tr(scene.secondaryText!)}</p>
               </Line>
             )}
             {scene.microText && (
               <Line delay={0.1}>
-                <p className="mt-4 text-[12px] uppercase tracking-[0.12em] text-white/55">{scene.microText}</p>
+                <p className="mt-4 text-[12px] uppercase tracking-[0.12em] text-white/55">{tr(scene.microText!)}</p>
               </Line>
             )}
           </div>
@@ -598,6 +601,7 @@ function VideoOverlay({
 /* ───────────────────────────── Final CTA overlay ───────────────────────────── */
 
 function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: string) => void }) {
+  const tr = useT();
   const fade = { initial: { opacity: 0, y: 22 }, animate: { opacity: 1, y: 0 } };
   return (
     <div className="absolute inset-0 z-40">
@@ -615,7 +619,7 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
           transition={{ duration: 0.8, delay: 0.06, ease }}
           className="max-w-[22ch] text-balance text-[clamp(30px,9vw,46px)] font-semibold leading-[1.02] tracking-tightest text-white lg:text-[clamp(44px,4vw,72px)]"
         >
-          {finalScene.title}
+          {tr(finalScene.title)}
         </motion.h2>
         <motion.ul
           {...fade}
@@ -625,7 +629,7 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
           {finalScene.useCases.map((u) => (
             <li key={u} className="flex items-center gap-2.5 text-[15px] text-white/85 lg:text-[17px]">
               <span className="h-1 w-1 shrink-0 rounded-full bg-gold" />
-              {u}
+              {tr(u)}
             </li>
           ))}
         </motion.ul>
@@ -641,17 +645,17 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
               trackEvent("cta_click", { label: finalScene.primaryCta, scene: finalScene.id });
               window.location.href = "/apartments/";
             }}
-            aria-label={finalScene.primaryCta}
+            aria-label={tr(finalScene.primaryCta)}
           >
-            {finalScene.primaryCta}
+            {tr(finalScene.primaryCta)}
             <ArrowRight className="h-4 w-4" />
           </Button>
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="ghost" onClick={() => onLead("consultation", "final-secondary")} aria-label={finalScene.secondaryCta}>
-              Связаться
+            <Button variant="ghost" onClick={() => onLead("consultation", "final-secondary")} aria-label={tr(finalScene.secondaryCta)}>
+              {tr("Связаться")}
             </Button>
-            <Button variant="outline" onClick={() => onLead("investment", "final-third")} aria-label={finalScene.thirdCta}>
-              {finalScene.thirdCta}
+            <Button variant="outline" onClick={() => onLead("investment", "final-third")} aria-label={tr(finalScene.thirdCta)}>
+              {tr(finalScene.thirdCta)}
             </Button>
           </div>
         </motion.div>
@@ -686,6 +690,7 @@ function DoorSlide({
   count: number;
   centerIndex: MotionValue<number>;
 }) {
+  const tr = useT();
   const Icon = infraIconMap[item.icon];
   const dist = useTransform(centerIndex, (c) => Math.abs(c - index));
   const textOpacity = useTransform(dist, [0, 0.4, 0.6], [1, 1, 0]);
@@ -702,17 +707,17 @@ function DoorSlide({
         >
           <Icon className="h-8 w-8 text-[#23301f]" />
           <h3 className="mt-3 text-[clamp(14px,4.6vw,20px)] font-semibold uppercase leading-tight tracking-[0.04em] text-[#1d2a18]">
-            {item.title}
+            {tr(item.title)}
           </h3>
           <span className="my-3 block h-px w-7 bg-gold" />
-          <p className="text-[clamp(11px,3.4vw,14px)] leading-snug text-[#6b665c]">{item.description}</p>
+          <p className="text-[clamp(11px,3.4vw,14px)] leading-snug text-[#6b665c]">{tr(item.description)}</p>
         </motion.div>
         <div className="relative flex-1 overflow-hidden">
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-[#f1ece2] to-transparent" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={item.image}
-            alt={item.title}
+            alt={tr(item.title)}
             loading={index < 2 ? "eager" : "lazy"}
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
@@ -725,18 +730,19 @@ function DoorSlide({
 /* ───────────────────── Reduced-motion fallback ───────────────────── */
 
 function StaticJourney({ wide }: { wide: boolean }) {
+  const tr = useT();
   return (
     <>
       {allScenes.slice(0, AMB_AT).map((s) => (
         <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
-      <section className="relative w-full bg-ink py-20" aria-label="Соучредитель проекта">
+      <section className="relative w-full bg-ink py-20" aria-label={tr("Соучредитель проекта")}>
         <FounderBlock animate={false} />
       </section>
       {allScenes.slice(AMB_AT, INFRA_AT).map((s) => (
         <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
-      <section className="bg-white px-5 py-16" aria-label="Инфраструктура комплекса">
+      <section className="bg-white px-5 py-16" aria-label={tr("Инфраструктура комплекса")}>
         <div className="space-y-6">
           {infraItems.map((item) => {
             const Icon = infraIconMap[item.icon];
@@ -744,13 +750,13 @@ function StaticJourney({ wide }: { wide: boolean }) {
               <article key={item.number} className="overflow-hidden rounded-[24px] bg-[#f1ece2]">
                 <div className="flex flex-col items-center px-6 pb-5 pt-7 text-center">
                   <Icon className="h-8 w-8 text-[#23301f]" />
-                  <h3 className="mt-3 text-[20px] font-semibold uppercase tracking-[0.04em] text-[#1d2a18]">{item.title}</h3>
+                  <h3 className="mt-3 text-[20px] font-semibold uppercase tracking-[0.04em] text-[#1d2a18]">{tr(item.title)}</h3>
                   <span className="my-3 block h-px w-7 bg-gold" />
-                  <p className="text-[14px] leading-snug text-[#6b665c]">{item.description}</p>
+                  <p className="text-[14px] leading-snug text-[#6b665c]">{tr(item.description)}</p>
                 </div>
                 <div className="relative aspect-[16/10] w-full overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.image} alt={item.title} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                  <img src={item.image} alt={tr(item.title)} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                 </div>
               </article>
             );
@@ -766,9 +772,10 @@ function StaticJourney({ wide }: { wide: boolean }) {
 }
 
 function StaticFinal({ wide }: { wide: boolean }) {
+  const tr = useT();
   const { openLead } = useUI();
   return (
-    <section className="relative h-[100svh] w-full overflow-hidden bg-ink" aria-label="Выбор объекта">
+    <section className="relative h-[100svh] w-full overflow-hidden bg-ink" aria-label={tr("Выбор объекта")}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={pick(finalScene.posterSrc, wide)} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
       <FinalOverlay
@@ -782,6 +789,7 @@ function StaticFinal({ wide }: { wide: boolean }) {
 }
 
 function StaticScene({ scene, wide }: { scene: Scene; wide: boolean }) {
+  const tr = useT();
   return (
     <section className="relative h-[100svh] w-full overflow-hidden bg-ink" aria-label={scene.eyebrow}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -792,8 +800,8 @@ function StaticScene({ scene, wide }: { scene: Scene; wide: boolean }) {
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)", paddingTop: "calc(env(safe-area-inset-top) + 72px)" }}
       >
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.4 }} transition={{ duration: 0.6, ease }} className="max-w-[34ch]">
-          <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">{scene.title}</h2>
-          <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78]">{scene.description}</p>
+          <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">{tr(scene.title)}</h2>
+          <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78]">{tr(scene.description)}</p>
         </motion.div>
       </div>
     </section>

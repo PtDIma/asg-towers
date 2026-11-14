@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Noto_Sans_Georgian } from "next/font/google";
+import { LangProvider } from "@/lib/i18n";
 import "./globals.css";
 
 const manrope = Manrope({
   subsets: ["latin", "cyrillic"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-manrope",
+  display: "swap",
+});
+
+// В Manrope нет грузинского алфавита — браузер берёт эти буквы отсюда.
+const georgian = Noto_Sans_Georgian({
+  subsets: ["georgian"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-georgian",
   display: "swap",
 });
 
@@ -63,13 +72,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" className={manrope.variable}>
+    <html lang="ru" className={`${manrope.variable} ${georgian.variable}`}>
       <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {children}
+        <LangProvider>{children}</LangProvider>
       </body>
     </html>
   );
