@@ -40,7 +40,7 @@ export function FounderBlock({ animate = true }: { animate?: boolean }) {
             height={643}
             loading="lazy"
             style={{ aspectRatio: "400 / 643" }}
-            className="relative w-[132px] rounded-[21px] bg-graphite object-cover lg:w-[208px]"
+            className="relative w-[132px] rounded-[21px] bg-graphite object-cover lg:w-[min(208px,calc((100svh-560px)*0.62))]"
           />
         </div>
 

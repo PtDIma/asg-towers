@@ -4,6 +4,7 @@ import { Button } from "@/components/Button";
 import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
+import { contacts, handover } from "@/data/contacts";
 
 export function Footer() {
   const { openLead } = useUI();
@@ -48,6 +49,33 @@ export function Footer() {
             </Button>
           </div>
         </div>
+
+        <dl className="mt-12 grid gap-6 border-t border-white/10 pt-8 text-[15px] sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
+          <div>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Телефон</dt>
+            <dd className="mt-2">
+              <a href={contacts.phoneHref} className="hover:text-gold">{contacts.phone}</a>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Почта</dt>
+            <dd className="mt-2">
+              <a href={`mailto:${contacts.email}`} className="hover:text-gold">{contacts.email}</a>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Офис продаж</dt>
+            <dd className="mt-2">
+              <a href={contacts.mapHref} target="_blank" rel="noopener noreferrer" className="hover:text-gold">
+                {contacts.address}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">Сдача объекта</dt>
+            <dd className="mt-2">{handover}</dd>
+          </div>
+        </dl>
 
         <div className="mt-12 flex flex-col gap-2 text-[13px] text-white/45 lg:mt-20 lg:flex-row lg:justify-between lg:border-t lg:border-white/10 lg:pt-8">
           <p>ASG Towers · Tbilisi, Georgia</p>

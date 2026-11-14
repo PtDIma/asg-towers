@@ -87,7 +87,7 @@ export const scenesBeforeInfra: Scene[] = [
     videoSrc: "/videos/05-enter-elevator.mp4",
     posterSrc: "/posters/05.jpg",
     eyebrow: "От квартиры — к жизни внутри дома",
-    title: "Одна кнопка — и ты уже не просто дома.",
+    title: "Одна кнопка лифта — и вы уже не просто дома.",
     description:
       "Ниже начинается то, ради чего обычно приходится ехать через весь город.",
     ctaLabel: "Что внутри комплекса",

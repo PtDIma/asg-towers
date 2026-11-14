@@ -18,6 +18,7 @@ import {
   type UnitCommercial,
   type UnitStatus,
 } from "@/lib/units-sheet";
+import { handover } from "@/data/contacts";
 import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/Button";
@@ -202,10 +203,6 @@ function FacadeStep({
       <h1 className="text-[clamp(32px,4vw,58px)] font-semibold leading-[1.02] tracking-tightest">
         Выберите этаж
       </h1>
-      <p className="mt-3 max-w-[54ch] text-[15px] leading-[1.5] text-white/55">
-        Левая башня, блок A. В продаже жилые этажи с 1-го по 15-й — от девяти
-        до четырнадцати квартир на этаже.
-      </p>
 
       <div className="mt-9 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         {/* Здание */}
@@ -613,7 +610,7 @@ function UnitSheet({
               Квартира {unit.id}
             </h2>
             <p className="mt-2 text-[14px] text-white/50">
-              {unit.floor} этаж · левая башня, блок A
+              {unit.floor} этаж · сдача {handover}
             </p>
 
             <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/10 pt-6 text-[14px]">

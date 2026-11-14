@@ -32,9 +32,16 @@ export function Header() {
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4 lg:h-[76px] lg:px-12 2xl:px-20">
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="ASG Towers — наверх"
+        <a
+          href="/"
+          onClick={(e) => {
+            // На главной — плавно наверх без перезагрузки, с других страниц — переход.
+            if (window.location.pathname === "/") {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+          aria-label="ASG Towers — на главную"
           className="flex items-baseline gap-1.5 cursor-pointer"
         >
           <span className="text-[15px] font-semibold tracking-[-0.02em] text-white">
@@ -43,7 +50,7 @@ export function Header() {
           <span className="text-[15px] font-light tracking-[0.18em] text-gold">
             TOWERS
           </span>
-        </button>
+        </a>
 
         <nav className="flex items-center gap-1.5" aria-label="Основная навигация">
           <button

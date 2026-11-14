@@ -28,6 +28,14 @@ const FRAME = "/images/elevator-frame.webp";
 // B91.5 (center 50.7%). The card is a touch larger so the metal always overlaps
 // its edges — no spill possible.
 const DOOR = { left: 23, top: 9.5, width: 55.4, height: 84 };
+// Широкий кадр лифта (Кадры/16*9/7.png = последний кадр 16:9-ролика 6-7):
+// белый проём L39.0 T20.9 R61.1 B84.1, карточка снова чуть больше проёма.
+const FRAME_WIDE = "/images/elevator-frame-wide.webp";
+const DOOR_WIDE = { left: 37.6, top: 19.6, width: 24.9, height: 65.8 };
+
+/** На десктопе те же сцены, но из 16:9-роликов: одинаковые имена в /wide/. */
+const pick = (src: string | undefined, wide: boolean) =>
+  wide && src ? src.replace("/videos/", "/videos/wide/").replace("/posters/", "/posters/wide/") : src;
 
 const allScenes: Scene[] = [...scenesBeforeInfra, ...scenesAfterInfra];
 const INFRA_AT = scenesBeforeInfra.length; // infra sits between video 06 and 07
@@ -87,14 +95,14 @@ const groupIds: number[] = [];
 const isLastInGroup = (i: number) =>
   i === allScenes.length - 1 || groupIds[i + 1] !== groupIds[i];
 
-export function JourneyReel() {
+export function JourneyReel({ wide = false }: { wide?: boolean }) {
   const prefersReduced = useReducedMotion();
-  return prefersReduced ? <StaticJourney /> : <AnimatedJourney />;
+  return prefersReduced ? <StaticJourney wide={wide} /> : <AnimatedJourney wide={wide} />;
 }
 
 /* ───────────────────────────── Animated ───────────────────────────── */
 
-function AnimatedJourney() {
+function AnimatedJourney({ wide }: { wide: boolean }) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const infraLayerRef = useRef<HTMLDivElement>(null);
@@ -376,6 +384,7 @@ function AnimatedJourney() {
   const isFinal = view.kind === "final";
   const activeScene = allScenes[Math.min(view.idx, allScenes.length - 1)];
   const backdropPoster = isFinal ? finalScene.posterSrc : activeScene.posterSrc;
+  const door = wide ? DOOR_WIDE : DOOR;
 
   return (
     <section
@@ -390,10 +399,10 @@ function AnimatedJourney() {
         src={backdropPoster}
         alt=""
         aria-hidden
-        className="absolute inset-0 hidden h-full w-full scale-110 object-cover opacity-30 blur-2xl md:block"
+        className="absolute inset-0 hidden h-full w-full scale-110 object-cover opacity-30 blur-2xl md:block lg:hidden"
       />
 
-      <div className="relative mx-auto h-full w-full overflow-hidden md:max-w-[460px] md:shadow-[0_0_140px_rgba(0,0,0,0.7)]">
+      <div className="relative mx-auto h-full w-full overflow-hidden md:max-w-[460px] md:shadow-[0_0_140px_rgba(0,0,0,0.7)] lg:max-w-none lg:shadow-none">
         {/* Video layer */}
         {allScenes.map((scene, i) => (
           <video
@@ -403,8 +412,8 @@ function AnimatedJourney() {
             }}
             className="absolute inset-0 h-full w-full object-cover object-center"
             style={{ opacity: 0 }}
-            src={scene.videoSrc}
-            poster={scene.posterSrc}
+            src={pick(scene.videoSrc, wide)}
+            poster={pick(scene.posterSrc, wide)}
             muted
             playsInline
             preload={i < 2 ? "auto" : "metadata"}
@@ -418,8 +427,8 @@ function AnimatedJourney() {
           }}
           className="absolute inset-0 h-full w-full object-cover object-center"
           style={{ opacity: 1 }}
-          src={INTRO_SRC}
-          poster="/posters/01.jpg"
+          src={pick(INTRO_SRC, wide)}
+          poster={pick("/posters/01.jpg", wide)}
           muted
           loop
           playsInline
@@ -434,8 +443,8 @@ function AnimatedJourney() {
           }}
           className="absolute inset-0 h-full w-full object-cover object-center"
           style={{ opacity: 0 }}
-          src={finalScene.videoSrc}
-          poster={finalScene.posterSrc}
+          src={pick(finalScene.videoSrc, wide)}
+          poster={pick(finalScene.posterSrc, wide)}
           muted
           loop
           playsInline
@@ -471,18 +480,24 @@ function AnimatedJourney() {
 
         {/* Infra doorway layer (frame on top, cards behind, revealed via hole) */}
         <div ref={infraLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
+          {/* Рамка повторяет геометрию object-cover видео под ней: узкая — по высоте,
+              широкая — 16:9, растянутая на большую из сторон экрана. */}
           <div
-          className="absolute left-1/2 top-0 h-full aspect-[820/1232]"
-          style={{ transform: "translateX(calc(-50% - 0.7%))" }}
-        >
+            className={wide ? "absolute left-1/2 top-1/2 aspect-video" : "absolute left-1/2 top-0 h-full aspect-[820/1232]"}
+            style={
+              wide
+                ? { width: "max(100%, calc(100svh * 16 / 9))", transform: "translate(-50%, -50%)" }
+                : { transform: "translateX(calc(-50% - 0.7%))" }
+            }
+          >
             {/* Cards behind the metal */}
             <div
               className="absolute z-0 overflow-hidden"
               style={{
-                left: `${DOOR.left}%`,
-                top: `${DOOR.top}%`,
-                width: `${DOOR.width}%`,
-                height: `${DOOR.height}%`,
+                left: `${door.left}%`,
+                top: `${door.top}%`,
+                width: `${door.width}%`,
+                height: `${door.height}%`,
               }}
             >
               <div ref={trackRef} className="flex h-full will-change-transform" style={{ width: `${infraItems.length * 100}%` }}>
@@ -493,20 +508,15 @@ function AnimatedJourney() {
             </div>
             {/* Elevator frame with transparent doorway, on top */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img ref={frameRef} src={FRAME} alt="" aria-hidden className="pointer-events-none absolute inset-0 z-10 h-full w-full object-cover" />
+            <img ref={frameRef} src={wide ? FRAME_WIDE : FRAME} alt="" aria-hidden className={`pointer-events-none absolute inset-0 z-10 h-full w-full ${wide ? "object-fill" : "object-cover"}`} />
           </div>
         </div>
 
         {/* Экран соучредителя — поверх замороженного кадра сцены 02. */}
         <div ref={ambLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
           <div className="absolute inset-0 bg-ink/80" aria-hidden />
-          <div
-            className="relative h-full w-full"
-            style={{
-              paddingTop: "calc(env(safe-area-inset-top) + 64px)",
-              paddingBottom: "calc(env(safe-area-inset-bottom) + 84px)",
-            }}
-          >
+          {/* На десктопе нет нижней плашки CTA, зато шапка выше — центр смещён вниз. */}
+          <div className="relative h-full w-full pb-[calc(env(safe-area-inset-bottom)+84px)] pt-[calc(env(safe-area-inset-top)+64px)] lg:pb-10 lg:pt-24">
             <FounderBlock animate={false} />
           </div>
         </div>
@@ -550,7 +560,7 @@ function VideoOverlay({
 
       <motion.div
         style={fadeOnExit ? { opacity: exitOpacity, y: exitY } : undefined}
-        className={`relative z-20 flex h-full flex-col px-5 ${alignClasses[scene.align]}`}
+        className={`relative z-20 flex h-full flex-col px-5 lg:px-12 2xl:px-20 ${alignClasses[scene.align]}`}
       >
         <div
           className="w-full"
@@ -559,14 +569,14 @@ function VideoOverlay({
             paddingTop: "calc(env(safe-area-inset-top) + 72px)",
           }}
         >
-          <div className="max-w-[34ch]">
+          <div className="max-w-[34ch] lg:max-w-[820px]">
             <Line delay={0}>
-              <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white">
+              <h2 className="whitespace-pre-line text-balance text-[clamp(34px,10vw,54px)] font-semibold leading-[0.97] tracking-tightest text-white lg:text-[clamp(48px,4.6vw,84px)]">
                 {scene.title}
               </h2>
             </Line>
             <Line delay={0.24}>
-              <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78]">{scene.description}</p>
+              <p className="mt-4 text-[16px] leading-[1.45] text-white/[0.78] lg:mt-6 lg:max-w-[52ch] lg:text-[19px]">{scene.description}</p>
             </Line>
             {scene.secondaryText && (
               <Line delay={0.32}>
@@ -594,7 +604,7 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/25" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/55 to-transparent" />
       <div
-        className="relative z-10 flex h-full flex-col justify-end px-5"
+        className="relative z-10 flex h-full flex-col justify-end px-5 lg:px-12 2xl:px-20"
         style={{
           paddingBottom: "calc(env(safe-area-inset-bottom) + 28px)",
           paddingTop: "calc(env(safe-area-inset-top) + 80px)",
@@ -603,7 +613,7 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
         <motion.h2
           {...fade}
           transition={{ duration: 0.8, delay: 0.06, ease }}
-          className="max-w-[22ch] text-balance text-[clamp(30px,9vw,46px)] font-semibold leading-[1.02] tracking-tightest text-white"
+          className="max-w-[22ch] text-balance text-[clamp(30px,9vw,46px)] font-semibold leading-[1.02] tracking-tightest text-white lg:text-[clamp(44px,4vw,72px)]"
         >
           {finalScene.title}
         </motion.h2>
@@ -613,7 +623,7 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
           className="mt-5 flex flex-col gap-1.5"
         >
           {finalScene.useCases.map((u) => (
-            <li key={u} className="flex items-center gap-2.5 text-[15px] text-white/85">
+            <li key={u} className="flex items-center gap-2.5 text-[15px] text-white/85 lg:text-[17px]">
               <span className="h-1 w-1 shrink-0 rounded-full bg-gold" />
               {u}
             </li>
@@ -622,7 +632,7 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
         <motion.div
           {...fade}
           transition={{ duration: 0.8, delay: 0.22, ease }}
-          className="mt-7 flex flex-col gap-3"
+          className="mt-7 flex flex-col gap-3 lg:max-w-[440px]"
         >
           <Button variant="primary" block onClick={() => onLead("apartment", "final-primary")} aria-label={finalScene.primaryCta}>
             {finalScene.primaryCta}
@@ -706,17 +716,17 @@ function DoorSlide({
 
 /* ───────────────────── Reduced-motion fallback ───────────────────── */
 
-function StaticJourney() {
+function StaticJourney({ wide }: { wide: boolean }) {
   return (
     <>
       {allScenes.slice(0, AMB_AT).map((s) => (
-        <StaticScene key={s.id} scene={s} />
+        <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
       <section className="relative w-full bg-ink py-20" aria-label="Соучредитель проекта">
         <FounderBlock animate={false} />
       </section>
       {allScenes.slice(AMB_AT, INFRA_AT).map((s) => (
-        <StaticScene key={s.id} scene={s} />
+        <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
       <section className="bg-white px-5 py-16" aria-label="Инфраструктура комплекса">
         <div className="space-y-6">
@@ -740,19 +750,19 @@ function StaticJourney() {
         </div>
       </section>
       {allScenes.slice(INFRA_AT).map((s) => (
-        <StaticScene key={s.id} scene={s} />
+        <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
-      <StaticFinal />
+      <StaticFinal wide={wide} />
     </>
   );
 }
 
-function StaticFinal() {
+function StaticFinal({ wide }: { wide: boolean }) {
   const { openLead } = useUI();
   return (
     <section className="relative h-[100svh] w-full overflow-hidden bg-ink" aria-label="Выбор объекта">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={finalScene.posterSrc} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+      <img src={pick(finalScene.posterSrc, wide)} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
       <FinalOverlay
         onLead={(interest, source) => {
           trackEvent("cta_click", { scene: finalScene.id, source });
@@ -763,11 +773,11 @@ function StaticFinal() {
   );
 }
 
-function StaticScene({ scene }: { scene: Scene }) {
+function StaticScene({ scene, wide }: { scene: Scene; wide: boolean }) {
   return (
     <section className="relative h-[100svh] w-full overflow-hidden bg-ink" aria-label={scene.eyebrow}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={scene.posterSrc} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+      <img src={pick(scene.posterSrc, wide)} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/5" />
       <div
         className={`relative z-10 flex h-full flex-col px-5 ${alignClasses[scene.align]}`}
