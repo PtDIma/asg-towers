@@ -39,7 +39,7 @@ export interface ApartmentGeo {
 export interface FloorPlan { floor: number; image: string; width: number; height: number; units: ApartmentGeo[]; }
 
 /** Поднимать при замене любой подложки — иначе браузеры отдают старую из кэша. */
-export const PLAN_ASSET_VERSION = "16";
+export const PLAN_ASSET_VERSION = "17";
 export const withVersion = (src: string) => `${src}?v=${PLAN_ASSET_VERSION}`;
 
 /** Чертежи, к которым уже есть 3D. Новый рендер — дописать ключ сюда и положить файл в /images/plan3d. */
