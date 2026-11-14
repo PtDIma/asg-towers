@@ -33,7 +33,6 @@ const ease = [0.22, 1, 0.36, 1] as const;
  */
 const status = {
   available: { fill: "#5FBF8B", label: "#7FD6A6", chip: "bg-[#5FBF8B]/15 text-[#7FD6A6] ring-1 ring-[#5FBF8B]/40" },
-  reserved: { fill: "#D9A441", label: "#E8BC6B", chip: "bg-[#D9A441]/15 text-[#E8BC6B] ring-1 ring-[#D9A441]/40" },
   sold: { fill: "#6B6B6B", label: "#9A9A9A", chip: "bg-white/8 text-white/45 ring-1 ring-white/15" },
 } satisfies Record<UnitStatus, { fill: string; label: string; chip: string }>;
 
@@ -180,7 +179,7 @@ function countByStatus(
   units: ApartmentGeo[],
   commercial: Map<string, UnitCommercial>
 ): Record<UnitStatus, number> {
-  const acc: Record<UnitStatus, number> = { available: 0, reserved: 0, sold: 0 };
+  const acc: Record<UnitStatus, number> = { available: 0, sold: 0 };
   for (const u of units) acc[commercial.get(u.id)?.status ?? "available"]++;
   return acc;
 }
@@ -589,6 +588,18 @@ function PlanSvg({
         })}
       </div>
 
+      {/* Над рекой — какой этаж сейчас открыт. */}
+      <div className="flex justify-center pb-2 pt-1">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#0A0A0B] px-3.5 py-1.5 text-[13px] font-semibold text-white shadow-md">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 text-gold" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
+            <path d="M12 3 3 7.5 12 12l9-4.5L12 3Z" />
+            <path d="m3 12 9 4.5 9-4.5" />
+            <path d="m3 16.5 9 4.5 9-4.5" />
+          </svg>
+          {tr("{n} этаж", { n: plan.floor })}
+        </span>
+      </div>
+
       {/* Река под планом: нижние квартиры смотрят на Куру — так это видно сразу. */}
       <svg viewBox="0 0 560 64" className="block w-full" aria-label={tr("Река Кура")} role="img">
         <path
@@ -817,6 +828,15 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
   // а у квартиры без рендера вкладка 3D указывала бы в пустоту.
   useEffect(() => setMode(src3d ? "3d" : "2d"), [unit.id, src3d]);
 
+  // 3D слева, 2D справа: направление анимации — откуда приходит новый вид.
+  const [dir, setDir] = useState(1);
+  const swipeX = useRef<number | null>(null);
+  const go = (m: "3d" | "2d") => {
+    if (m === mode) return;
+    setDir(m === "2d" ? 1 : -1);
+    setMode(m);
+  };
+
   const tabs = [
     { key: "3d" as const, label: "3D" },
     { key: "2d" as const, label: "2D" },
@@ -830,7 +850,7 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
           {tabs.map((t) => (
             <button
               key={t.key}
-              onClick={() => setMode(t.key)}
+              onClick={() => go(t.key)}
               aria-pressed={mode === t.key}
               className={`cursor-pointer rounded-full px-5 py-1.5 text-[13px] font-semibold tracking-wide transition-colors duration-200 ${
                 mode === t.key ? "bg-[#0A0A0B] text-white" : "text-[#0A0A0B]/55 hover:text-[#0A0A0B]"
@@ -842,17 +862,69 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
         </div>
       )}
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        key={mode}
-        src={mode === "3d" && src3d ? src3d : unitPlan(unit)}
-        alt={
-          mode === "3d" && src3d
-            ? tr("Квартира {id} — объёмная планировка", { id: unit.id })
-            : tr("Квартира {id} — чертёж", { id: unit.id })
-        }
-        className="max-h-[42vh] w-auto max-w-full object-contain sm:max-h-[370px]"
-      />
+      {/* Свайп влево-вправо и стрелки по бокам листают 3D ↔ 2D. */}
+      <div
+        className="relative flex w-full touch-pan-y select-none justify-center overflow-hidden"
+        onPointerDown={(e) => {
+          swipeX.current = e.clientX;
+        }}
+        onPointerUp={(e) => {
+          if (!src3d || swipeX.current === null) return;
+          const dx = e.clientX - swipeX.current;
+          swipeX.current = null;
+          if (Math.abs(dx) < 40) return;
+          go(dx < 0 ? "2d" : "3d");
+        }}
+        onPointerCancel={() => {
+          swipeX.current = null;
+        }}
+      >
+        <AnimatePresence mode="popLayout" initial={false} custom={dir}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <motion.img
+            key={mode}
+            custom={dir}
+            variants={{
+              enter: (d: number) => ({ x: d * 60, opacity: 0 }),
+              center: { x: 0, opacity: 1 },
+              exit: (d: number) => ({ x: d * -60, opacity: 0 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.28, ease }}
+            draggable={false}
+            src={mode === "3d" && src3d ? src3d : unitPlan(unit)}
+            alt={
+              mode === "3d" && src3d
+                ? tr("Квартира {id} — объёмная планировка", { id: unit.id })
+                : tr("Квартира {id} — чертёж", { id: unit.id })
+            }
+            className="max-h-[42vh] w-auto max-w-full object-contain sm:max-h-[370px]"
+          />
+        </AnimatePresence>
+
+        {src3d && (
+          <>
+            <button
+              onClick={() => go("3d")}
+              disabled={mode === "3d"}
+              aria-label="3D"
+              className="absolute left-1 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/85 text-[#0A0A0B] shadow-md backdrop-blur transition-opacity duration-200 disabled:pointer-events-none disabled:opacity-0"
+            >
+              <ArrowRight className="h-4 w-4 rotate-180" />
+            </button>
+            <button
+              onClick={() => go("2d")}
+              disabled={mode === "2d"}
+              aria-label="2D"
+              className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/85 text-[#0A0A0B] shadow-md backdrop-blur transition-opacity duration-200 disabled:pointer-events-none disabled:opacity-0"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
