@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { scenesBeforeInfra, scenesAfterInfra, finalScene, type Scene } from "@/data/scenes";
 import { infraItems, type InfraItem } from "@/data/infrastructure";
 import { infraIconMap } from "@/components/infraIcons";
-import { AmbassadorBlock } from "@/components/AmbassadorBlock";
+import { FounderBlock } from "@/components/FounderBlock";
 import { useUI } from "@/hooks/useLeadModal";
 import { Button } from "@/components/Button";
 import { ArrowRight } from "@/components/icons";
@@ -39,10 +39,10 @@ const FINAL_LEN = 1100; // scroll the final CTA screen stays pinned
 type Segment =
   | { kind: "video"; vIdx: number; scene: Scene; len: number }
   | { kind: "infra"; len: number }
-  | { kind: "ambassador"; len: number }
+  | { kind: "founder"; len: number }
   | { kind: "final"; len: number };
 
-// Экран амбассадора встаёт сразу после сцены 02: зритель уже понял, что это за
+// Экран соучредителя встаёт сразу после сцены 02: зритель уже понял, что это за
 // объект, и подтверждение от лица ложится в нужный момент. Раньше — рано.
 const AMB_AT = 2;
 const AMB_LEN = 1300;
@@ -51,7 +51,7 @@ const segments: Segment[] = [
   ...scenesBeforeInfra
     .slice(0, AMB_AT)
     .map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: s.scrollLength })),
-  { kind: "ambassador" as const, len: AMB_LEN },
+  { kind: "founder" as const, len: AMB_LEN },
   ...scenesBeforeInfra
     .slice(AMB_AT)
     .map((s, i) => ({ kind: "video" as const, vIdx: AMB_AT + i, scene: s, len: s.scrollLength })),
@@ -103,7 +103,7 @@ function AnimatedJourney() {
   const textProgress = useMotionValue(0);
   const infraCenter = useMotionValue(0);
   const ambLayerRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<{ kind: "video" | "infra" | "ambassador" | "final"; idx: number }>({
+  const [view, setView] = useState<{ kind: "video" | "infra" | "founder" | "final"; idx: number }>({
     kind: "video",
     idx: 0,
   });
@@ -239,8 +239,8 @@ function AnimatedJourney() {
           setView({ kind: "video", idx: seg.vIdx });
           setInFinal(false);
         }
-      } else if (seg.kind === "ambassador") {
-        // Экран амбассадора. Фон — застывший последний кадр сцены 02: лента не
+      } else if (seg.kind === "founder") {
+        // Экран соучредителя. Фон — застывший последний кадр сцены 02: лента не
         // проваливается в чёрное, портрет стоит на фоне башен.
         showVideo(AMB_AT - 1);
         escalate(AMB_AT);
@@ -259,7 +259,7 @@ function AnimatedJourney() {
         textProgress.set(1);
         if (viewRef.current !== "amb") {
           viewRef.current = "amb";
-          setView({ kind: "ambassador", idx: AMB_AT - 1 });
+          setView({ kind: "founder", idx: AMB_AT - 1 });
           setInFinal(false);
         }
       } else if (seg.kind === "infra") {
@@ -497,7 +497,7 @@ function AnimatedJourney() {
           </div>
         </div>
 
-        {/* Экран амбассадора — поверх замороженного кадра сцены 02. */}
+        {/* Экран соучредителя — поверх замороженного кадра сцены 02. */}
         <div ref={ambLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
           <div className="absolute inset-0 bg-ink/80" aria-hidden />
           <div
@@ -507,7 +507,7 @@ function AnimatedJourney() {
               paddingBottom: "calc(env(safe-area-inset-bottom) + 84px)",
             }}
           >
-            <AmbassadorBlock animate={false} />
+            <FounderBlock animate={false} />
           </div>
         </div>
       </div>
@@ -712,8 +712,8 @@ function StaticJourney() {
       {allScenes.slice(0, AMB_AT).map((s) => (
         <StaticScene key={s.id} scene={s} />
       ))}
-      <section className="relative w-full bg-ink py-20" aria-label="Амбассадор проекта">
-        <AmbassadorBlock animate={false} />
+      <section className="relative w-full bg-ink py-20" aria-label="Соучредитель проекта">
+        <FounderBlock animate={false} />
       </section>
       {allScenes.slice(AMB_AT, INFRA_AT).map((s) => (
         <StaticScene key={s.id} scene={s} />

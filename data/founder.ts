@@ -1,5 +1,5 @@
 /**
- * Амбассадор проекта.
+ * Соучредитель проекта — публичный блок о нём.
  *
  * Цитата — реальная, из авторского текста самого игрока в The Players' Tribune
  * («I bring always with me Georgia. All the people»). Она про Грузию, не про
@@ -8,7 +8,7 @@
  * согласованная фраза именно о проекте — меняем quote и убираем quoteSource.
  */
 
-export interface Ambassador {
+export interface Founder {
   eyebrow: string;
   name: string;
   /** Фактическая справка. Только текст: клубная символика правами не покрыта. */
@@ -22,13 +22,13 @@ export interface Ambassador {
   photoAlt: string;
 }
 
-export const ambassador: Ambassador = {
-  eyebrow: "Амбассадор проекта",
+export const founder: Founder = {
+  eyebrow: "Соучредитель проекта",
   name: "Хвича Кварацхелия",
   role: "Футболист сборной Грузии.",
   quote: "Я всегда беру Грузию с собой. Всех её людей.",
   quoteSource: "The Players’ Tribune",
   note: "ASG Towers — место, в которое хочется возвращаться.",
-  photo: "/images/ambassador/khvicha-avatar.webp",
-  photoAlt: "Хвича Кварацхелия — амбассадор проекта ASG Towers",
+  photo: "/images/ambassador/khvicha-trophy.webp",
+  photoAlt: "Хвича Кварацхелия — соучредитель проекта ASG Towers",
 };

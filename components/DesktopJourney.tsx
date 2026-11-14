@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { AmbassadorBlock } from "@/components/AmbassadorBlock";
+import { FounderBlock } from "@/components/FounderBlock";
 import {
   desktopBeforeInfra,
   desktopAfterInfra,
@@ -354,24 +354,24 @@ function DesktopFinal() {
 
 /* ───────────────────────────── Root ───────────────────────────── */
 
-/* ───────────────────────────── Ambassador ───────────────────────────── */
+/* ───────────────────────────── Founder ───────────────────────────── */
 
 /**
  * Тот же кадр, что и в секции «district», но затемнённый: на мобиле экран
- * амбассадора стоит на замороженном кадре той же сцены — держим единый вид.
+ * соучредителя стоит на замороженном кадре той же сцены — держим единый вид.
  */
-function DesktopAmbassador() {
+function DesktopFounder() {
   return (
     <section
-      className="relative h-screen min-h-[780px] w-full overflow-hidden bg-ink"
-      aria-label="Амбассадор проекта"
+      className="relative h-screen min-h-[860px] w-full overflow-hidden bg-ink"
+      aria-label="Соучредитель проекта"
     >
       <ParallaxFrame src="/images/desktop/district.webp" alt="" className="absolute inset-0" />
       <div className="pointer-events-none absolute inset-0 bg-ink/85" />
       {/* pt-16 смещает оптический центр ниже прозрачной шапки — иначе на низких
           экранах надпись «Амбассадор проекта» уезжает под логотип. */}
       <div className="relative z-10 h-full w-full pt-16">
-        <AmbassadorBlock />
+        <FounderBlock />
       </div>
     </section>
   );
@@ -393,7 +393,7 @@ export function DesktopJourney() {
       <DesktopHero section={hero} />
       <Section section={district} />
       {/* Третий экран: зритель уже знает, что за объект — тут подтверждение. */}
-      <DesktopAmbassador />
+      <DesktopFounder />
       {rest.map((s) => (
         <Section key={s.id} section={s} />
       ))}
