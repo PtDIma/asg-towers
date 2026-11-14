@@ -191,6 +191,21 @@ function FacadeStep({
   commercial: Map<string, UnitCommercial>;
 }) {
   const [hover, setHover] = useState<number | null>(null);
+  // Подсказка при входе: подсветка один раз пробегает по этажам снизу вверх —
+  // сразу видно, что фасад кликабельный. Первое наведение её останавливает.
+  const [sweep, setSweep] = useState<number | null>(null);
+  useEffect(() => {
+    let f = 0;
+    const id = window.setInterval(() => {
+      f += 1;
+      if (f > facadeBands.length) {
+        window.clearInterval(id);
+        setSweep(null);
+      } else setSweep(f);
+    }, 70);
+    return () => window.clearInterval(id);
+  }, []);
+  const active = hover ?? sweep;
 
   return (
     <motion.section
@@ -206,19 +221,26 @@ function FacadeStep({
 
       <div className="mt-9 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         {/* Здание */}
-        <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-black/40">
+        {/* На десктопе фасад вписан в высоту экрана — все 15 этажей видны без прокрутки.
+            Контейнер обжимает картинку (w-fit), полосы позиционируются от неё. */}
+        <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-black/40 lg:mx-auto lg:w-fit">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={facadeImage} alt="Фасад левой башни" className="block w-full" />
+          <img src={facadeImage} alt="Фасад левой башни" className="block w-full lg:h-[calc(100svh-200px)] lg:min-h-[560px] lg:w-auto" />
 
           {facadeBands.map((b) => {
-            const on = hover === b.floor;
+            const on = active === b.floor;
+            const fp = floorPlans.find((p) => p.floor === b.floor);
+            const free = fp ? countByStatus(fp.units, commercial).available : 0;
             return (
               <button
                 key={b.floor}
                 onClick={() => onPick(b.floor)}
-                onMouseEnter={() => setHover(b.floor)}
+                onMouseEnter={() => {
+                  setSweep(null);
+                  setHover(b.floor);
+                }}
                 onMouseLeave={() => setHover(null)}
-                aria-label={`${b.floor} этаж, отметка ${b.level}`}
+                aria-label={`${b.floor} этаж, свободно ${free}`}
                 className="group absolute cursor-pointer"
                 style={{
                   left: `${b.x * 100}%`,
@@ -230,29 +252,34 @@ function FacadeStep({
                 <span
                   className="absolute inset-x-0 inset-y-[1px] rounded-[2px] border transition-all duration-200"
                   style={{
-                    borderColor: on ? "#C8A96A" : "rgba(200,169,106,0.32)",
+                    borderColor: on ? "#C8A96A" : "rgba(214,178,104,0.95)",
                     borderWidth: on ? 2 : 1,
-                    background: on ? "rgba(200,169,106,0.40)" : "rgba(200,169,106,0.08)",
+                    background: on ? "rgba(200,169,106,0.55)" : "rgba(200,160,80,0.26)",
                     boxShadow: on ? "0 0 30px rgba(200,169,106,0.45)" : "none",
                   }}
                 />
                 <span
-                  className="pointer-events-none absolute left-full top-1/2 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-all duration-200"
+                  className={`pointer-events-none absolute left-full top-1/2 z-10 ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-full font-semibold tabular-nums leading-none transition-all duration-200 sm:ml-2.5 ${
+                    on ? "px-2.5 py-[5px] text-[12px] lg:text-[13px]" : "px-1.5 py-[2px] text-[10px] lg:px-2 lg:py-[3px] lg:text-[12px]"
+                  }`}
                   style={{
-                    opacity: on ? 1 : 0,
-                    background: on ? "#C8A96A" : "rgba(10,10,11,0.82)",
-                    color: on ? "#0A0A0B" : "#C8A96A",
+                    background: on ? "#C8A96A" : "rgba(10,10,11,0.72)",
+                    color: on ? "#0A0A0B" : "#E6D3A8",
                     boxShadow: on ? "0 4px 18px rgba(200,169,106,0.4)" : "none",
                   }}
                 >
-                  {b.floor} этаж
+                  {on ? `${b.floor} этаж · своб. ${free}` : b.floor}
                 </span>
               </button>
             );
           })}
 
-          <span className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-black/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-white/60 backdrop-blur">
-            Наведите на этаж
+          <span className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-2 rounded-full border border-gold/50 bg-black/70 px-3.5 py-2 text-[12px] font-medium text-white backdrop-blur">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
+            </span>
+            Нажмите на этаж, чтобы открыть план
           </span>
         </div>
 
