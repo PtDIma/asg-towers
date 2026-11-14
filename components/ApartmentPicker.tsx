@@ -203,8 +203,8 @@ function FacadeStep({
         Выберите этаж
       </h1>
       <p className="mt-3 max-w-[54ch] text-[15px] leading-[1.5] text-white/55">
-        Левая башня, блок A. Открыты первые два жилых этажа — по девять квартир
-        на каждом.
+        Левая башня, блок A. В продаже жилые этажи с 1-го по 15-й — от девяти
+        до четырнадцати квартир на этаже.
       </p>
 
       <div className="mt-9 grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
@@ -226,22 +226,23 @@ function FacadeStep({
                 style={{
                   left: `${b.x * 100}%`,
                   width: `${b.w * 100}%`,
-                  top: `calc(${b.y * 100}% - 11px)`,
-                  height: `calc(${b.h * 100}% + 22px)`,
+                  top: `${b.y * 100}%`,
+                  height: `${b.h * 100}%`,
                 }}
               >
                 <span
-                  className="absolute inset-x-0 bottom-[11px] top-[11px] rounded-[3px] border transition-all duration-200"
+                  className="absolute inset-x-0 inset-y-[1px] rounded-[2px] border transition-all duration-200"
                   style={{
-                    borderColor: on ? "#C8A96A" : "rgba(200,169,106,0.55)",
-                    borderWidth: on ? 2 : 1.5,
-                    background: on ? "rgba(200,169,106,0.36)" : "rgba(200,169,106,0.14)",
+                    borderColor: on ? "#C8A96A" : "rgba(200,169,106,0.32)",
+                    borderWidth: on ? 2 : 1,
+                    background: on ? "rgba(200,169,106,0.40)" : "rgba(200,169,106,0.08)",
                     boxShadow: on ? "0 0 30px rgba(200,169,106,0.45)" : "none",
                   }}
                 />
                 <span
-                  className="absolute left-full top-1/2 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-all duration-200"
+                  className="pointer-events-none absolute left-full top-1/2 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-all duration-200"
                   style={{
+                    opacity: on ? 1 : 0,
                     background: on ? "#C8A96A" : "rgba(10,10,11,0.82)",
                     color: on ? "#0A0A0B" : "#C8A96A",
                     boxShadow: on ? "0 4px 18px rgba(200,169,106,0.4)" : "none",
@@ -262,31 +263,27 @@ function FacadeStep({
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
             <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Выберите этаж</p>
-            <ul className="mt-4 flex flex-col gap-2.5">
+            <ul className="mt-4 grid grid-cols-3 gap-2">
               {facadeBands.map((b) => {
                 const plan = floorPlans.find((p) => p.floor === b.floor);
-                const free = plan
-                  ? countByStatus(plan.units, commercial).available
-                  : 0;
+                const free = plan ? countByStatus(plan.units, commercial).available : 0;
                 return (
                   <li key={b.floor}>
                     <button
                       onClick={() => onPick(b.floor)}
                       onMouseEnter={() => setHover(b.floor)}
                       onMouseLeave={() => setHover(null)}
-                      className={`flex w-full cursor-pointer items-center justify-between rounded-xl border px-4 py-3.5 text-left transition-all duration-200 ${
+                      aria-label={`${b.floor} этаж, свободно ${free} из ${plan?.units.length ?? 0}`}
+                      className={`w-full cursor-pointer rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ${
                         hover === b.floor
                           ? "border-gold/60 bg-gold/[0.12]"
                           : "border-white/10 bg-white/[0.04] hover:border-gold/40"
                       }`}
                     >
-                      <span>
-                        <span className="block text-[17px] font-semibold">{b.floor} этаж</span>
-                        <span className="mt-0.5 block text-[12px] text-white/45">
-                          9 квартир · свободно {free} · отм. {b.level}
-                        </span>
+                      <span className="block text-[16px] font-semibold leading-none">{b.floor}</span>
+                      <span className="mt-1.5 block text-[11px] leading-none text-white/45">
+                        своб. {free}/{plan?.units.length ?? 0}
                       </span>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-gold" />
                     </button>
                   </li>
                 );
@@ -360,12 +357,12 @@ function FloorStep({
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
             <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">Этаж</p>
-            <div className="mt-4 grid grid-cols-2 gap-2.5">
-              {floorPlans.map((p) => (
+            <div className="mt-4 grid grid-cols-5 gap-2">
+              {[...floorPlans].reverse().map((p) => (
                 <button
                   key={p.floor}
                   onClick={() => onFloorChange(p.floor)}
-                  className={`cursor-pointer rounded-xl border px-4 py-3 text-[15px] font-semibold transition-all duration-200 ${
+                  className={`cursor-pointer rounded-xl border px-2 py-2.5 text-[15px] font-semibold tabular-nums transition-all duration-200 ${
                     p.floor === plan.floor
                       ? "border-gold bg-gold text-ink"
                       : "border-white/10 bg-white/[0.04] text-white/80 hover:border-gold/40"
@@ -389,11 +386,6 @@ function FloorStep({
         </div>
       </div>
 
-      {plan.units.some((u) => u.areaDerived) && (
-        <p className="mt-6 text-[12px] text-white/35">
-          * площадь не подписана в чертеже, посчитана как студия + балкон + санузел — уточняется.
-        </p>
-      )}
     </motion.section>
   );
 }
@@ -534,12 +526,11 @@ function UnitList({
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ background: status[st].fill }}
                 />
-                <span className="w-8 shrink-0 text-[14px] font-semibold tabular-nums">
+                <span className="w-11 shrink-0 text-[14px] font-semibold tabular-nums">
                   {u.id}
                 </span>
                 <span className="shrink-0 text-[13px] text-white/60 tabular-nums">
                   {u.area} м²
-                  {u.areaDerived && <span className="text-gold/70">*</span>}
                 </span>
                 <span className="ml-auto text-[13px] text-white/80 tabular-nums">
                   {st === "sold" ? "—" : formatPrice(info?.price)}
@@ -630,7 +621,6 @@ function UnitSheet({
                 <dt className="text-white/40">Общая площадь</dt>
                 <dd className="mt-1 text-[21px] font-semibold">
                   {unit.area} м²
-                  {unit.areaDerived && <span className="ml-1 text-[13px] text-gold/70">*</span>}
                 </dd>
               </div>
               <div>
@@ -663,12 +653,6 @@ function UnitSheet({
                 </div>
               )}
             </dl>
-
-            {unit.areaDerived && (
-              <p className="mt-4 text-[12px] leading-snug text-white/35">
-                * площадь не подписана в чертеже и уточняется у застройщика.
-              </p>
-            )}
 
             {sold && (
               <p className="mt-6 text-[14px] text-white/55">
@@ -707,11 +691,12 @@ function UnitSheet({
  * а 2D остаётся под рукой для тех, кто читает чертёж.
  */
 function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
-  const [mode, setMode] = useState<"3d" | "2d">("3d");
+  const src3d = unitPlan3d(unit);
+  const [mode, setMode] = useState<"3d" | "2d">(src3d ? "3d" : "2d");
 
-  // Сброс на 3D при переходе к другой квартире — иначе выбранная вкладка
-  // «прилипает» и следующая карточка открывается чертежом.
-  useEffect(() => setMode("3d"), [unit.id]);
+  // Сброс при переходе к другой квартире — иначе выбранная вкладка «прилипает»,
+  // а у квартиры без рендера вкладка 3D указывала бы в пустоту.
+  useEffect(() => setMode(src3d ? "3d" : "2d"), [unit.id, src3d]);
 
   const tabs = [
     { key: "3d" as const, label: "3D" },
@@ -720,27 +705,30 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <div className="mb-3 inline-flex rounded-full bg-black/[0.06] p-1">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setMode(t.key)}
-            aria-pressed={mode === t.key}
-            className={`cursor-pointer rounded-full px-5 py-1.5 text-[13px] font-semibold tracking-wide transition-colors duration-200 ${
-              mode === t.key ? "bg-[#0A0A0B] text-white" : "text-[#0A0A0B]/55 hover:text-[#0A0A0B]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Без рендера переключать нечего — показываем чертёж без вкладок. */}
+      {src3d && (
+        <div className="mb-3 inline-flex rounded-full bg-black/[0.06] p-1">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setMode(t.key)}
+              aria-pressed={mode === t.key}
+              className={`cursor-pointer rounded-full px-5 py-1.5 text-[13px] font-semibold tracking-wide transition-colors duration-200 ${
+                mode === t.key ? "bg-[#0A0A0B] text-white" : "text-[#0A0A0B]/55 hover:text-[#0A0A0B]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         key={mode}
-        src={mode === "3d" ? unitPlan3d(unit.id) : unitPlan(unit.id)}
+        src={mode === "3d" && src3d ? src3d : unitPlan(unit)}
         alt={
-          mode === "3d"
+          mode === "3d" && src3d
             ? `Квартира ${unit.id} — объёмная планировка`
             : `Квартира ${unit.id} — чертёж`
         }

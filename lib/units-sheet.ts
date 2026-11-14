@@ -11,7 +11,12 @@
  */
 
 const SHEET_ID = "1Rpdi-bSkweYvIGtQksYtBP72VveKQzZbH7ifg_B1Mz8";
-const SHEET_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+/**
+ * Лист «Блок А» — 159 квартир этажей 1–15. Старый «Лист1» (нумерация 11–29)
+ * больше не читается; его можно удалить после выкладки.
+ */
+const SHEET_NAME = "Блок А";
+const SHEET_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
 export type UnitStatus = "available" | "reserved" | "sold";
 
