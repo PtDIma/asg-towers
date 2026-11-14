@@ -634,7 +634,15 @@ function FinalOverlay({ onLead }: { onLead: (interest: LeadInterest, source: str
           transition={{ duration: 0.8, delay: 0.22, ease }}
           className="mt-7 flex flex-col gap-3 lg:max-w-[440px]"
         >
-          <Button variant="primary" block onClick={() => onLead("apartment", "final-primary")} aria-label={finalScene.primaryCta}>
+          <Button
+            variant="primary"
+            block
+            onClick={() => {
+              trackEvent("cta_click", { label: finalScene.primaryCta, scene: finalScene.id });
+              window.location.href = "/apartments/";
+            }}
+            aria-label={finalScene.primaryCta}
+          >
             {finalScene.primaryCta}
             <ArrowRight className="h-4 w-4" />
           </Button>

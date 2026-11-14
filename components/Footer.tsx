@@ -79,7 +79,6 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col gap-2 text-[13px] text-white/45 lg:mt-20 lg:flex-row lg:justify-between lg:border-t lg:border-white/10 lg:pt-8">
           <p>ASG Towers · Tbilisi, Georgia</p>
-          <p>© {new Date().getFullYear()} ASG Development. Все права защищены.</p>
         </div>
       </div>
     </footer>
