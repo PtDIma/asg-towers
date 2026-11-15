@@ -25,6 +25,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Токен бота для заявок — в Settings → Secrets and variables → Actions.
+          NEXT_PUBLIC_TG_BOT_TOKEN: ${{ secrets.TG }}
+          NEXT_PUBLIC_TG_CHAT_ID: ${{ vars.TG_CHAT_ID || '-5254382625' }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

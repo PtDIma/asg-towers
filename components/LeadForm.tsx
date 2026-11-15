@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  interestOptions,
-  messengerOptions,
-  submitLead,
-  type LeadInterest,
-  type LeadPayload,
-  type Messenger,
-} from "@/lib/lead";
+import { submitLead, type LeadInterest, type LeadPayload } from "@/lib/lead";
 import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 import { useT } from "@/lib/i18n";
@@ -28,11 +21,8 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
   const tr = useT();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [messenger, setMessenger] = useState<Messenger>("telegram");
-  const [interest, setInterest] = useState<LeadInterest>(
-    defaultInterest ?? "consultation"
-  );
-  const [comment, setComment] = useState("");
+  // Интерес не спрашиваем — он известен по кнопке, с которой открыли форму.
+  const interest: LeadInterest = defaultInterest ?? "consultation";
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [sendError, setSendError] = useState(false);
@@ -60,10 +50,8 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
     const payload: LeadPayload = {
       name: name.trim(),
       phone: phone.trim(),
-      messenger,
       interest,
       unitId,
-      comment: comment.trim() || undefined,
     };
     try {
       await submitLead(payload);
@@ -136,52 +124,6 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
         )}
       </div>
 
-      {/* Messenger */}
-      <fieldset>
-        <legend className="mb-2 text-[13px] text-white/70">{tr("Способ связи")}</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {messengerOptions.map((m) => (
-            <Chip
-              key={m.value}
-              active={messenger === m.value}
-              onClick={() => setMessenger(m.value)}
-              label={tr(m.label)}
-            />
-          ))}
-        </div>
-      </fieldset>
-
-      {/* Interest */}
-      <fieldset>
-        <legend className="mb-2 text-[13px] text-white/70">{tr("Интерес")}</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {interestOptions.map((i) => (
-            <Chip
-              key={i.value}
-              active={interest === i.value}
-              onClick={() => setInterest(i.value)}
-              label={tr(i.label)}
-            />
-          ))}
-        </div>
-      </fieldset>
-
-      {/* Comment */}
-      <div>
-        <label htmlFor="lead-comment" className="mb-1.5 block text-[13px] text-white/70">
-          {tr("Комментарий")}
-        </label>
-        <textarea
-          id="lead-comment"
-          name="comment"
-          rows={3}
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder={tr("Бюджет, сроки, пожелания по виду или этажу")}
-          className="w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-4 py-3 text-[16px] text-white placeholder:text-white/35 outline-none transition-colors focus:border-gold/60"
-        />
-      </div>
-
       <button
         type="submit"
         disabled={submitting}
@@ -210,30 +152,5 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
         {tr("Менеджер свяжется с вами и отправит подробности по выбранному объекту.")}
       </p>
     </form>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`min-h-[44px] rounded-2xl border px-2 text-[13px] font-medium transition-colors duration-200 cursor-pointer ${
-        active
-          ? "border-gold bg-gold/15 text-white"
-          : "border-white/12 bg-white/[0.03] text-white/65 hover:bg-white/[0.07]"
-      }`}
-    >
-      {label}
-    </button>
   );
 }
