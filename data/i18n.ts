@@ -286,4 +286,6 @@ export const dict: Record<string, { en: string; ka: string }> = {
   "Оставить заявку": { en: "Send a request", ka: "განაცხადის დატოვება" },
   "Квартира {id} — объёмная планировка": { en: "Apartment {id} — 3D layout", ka: "ბინა {id} — 3D გეგმარება" },
   "Квартира {id} — чертёж": { en: "Apartment {id} — drawing", ka: "ბინა {id} — ნახაზი" },
+  "Фото": { en: "Photos", ka: "ფოტო" },
+  "Квартира {id} — фото {n}": { en: "Apartment {id} — photo {n}", ka: "ბინა {id} — ფოტო {n}" },
 };

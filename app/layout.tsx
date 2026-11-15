@@ -73,6 +73,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className={`${manrope.variable} ${georgian.variable}`}>
+      <head>
+        {/* GitHub Pages кэширует HTML до 10 минут, а при выкатке удаляет старые
+            скрипты. Страница из кэша ссылается на них — 404, лента не стартует,
+            чёрный экран. Один раз перезагружаемся и берём свежую версию. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.addEventListener("error",function(e){var t=e.target;if(!t||t.tagName!=="SCRIPT"||(t.src||"").indexOf("/_next/")<0)return;try{if(sessionStorage.getItem("chunk-reload"))return;sessionStorage.setItem("chunk-reload","1")}catch(_){return}location.reload()},true);`,
+          }}
+        />
+      </head>
       <body>
         <script
           type="application/ld+json"

@@ -19,6 +19,7 @@ import {
   type UnitStatus,
 } from "@/lib/units-sheet";
 import { handover } from "@/data/contacts";
+import { unitPhotos } from "@/data/unitPhotos";
 import { useUI } from "@/hooks/useLeadModal";
 import { trackEvent } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
@@ -815,65 +816,89 @@ function UnitSheet({
  * object-contain они отличаются на величину полей.
  */
 /**
- * Планировка квартиры: объёмная визуализация и плоский чертёж.
- * По умолчанию открывается 3D — с мебелью она понятнее покупателю,
- * а 2D остаётся под рукой для тех, кто читает чертёж.
+ * Планировка квартиры лентой: 3D → фото интерьера → 2D-чертёж.
+ * Листается свайпом, стрелками по бокам и вкладками сверху. Открывается
+ * первым слайдом — 3D с мебелью понятнее покупателю, чертёж в конце.
  */
+type Slide = { kind: "3d" | "photo" | "2d"; src: string };
+
 function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
   const tr = useT();
   const src3d = unitPlan3d(unit);
-  const [mode, setMode] = useState<"3d" | "2d">(src3d ? "3d" : "2d");
+  const slides = useMemo<Slide[]>(
+    () => [
+      ...(src3d ? [{ kind: "3d" as const, src: src3d }] : []),
+      ...unitPhotos(unit.plan).map((src) => ({ kind: "photo" as const, src })),
+      { kind: "2d" as const, src: unitPlan(unit) },
+    ],
+    [unit, src3d]
+  );
 
-  // Сброс при переходе к другой квартире — иначе выбранная вкладка «прилипает»,
-  // а у квартиры без рендера вкладка 3D указывала бы в пустоту.
-  useEffect(() => setMode(src3d ? "3d" : "2d"), [unit.id, src3d]);
-
-  // 3D слева, 2D справа: направление анимации — откуда приходит новый вид.
+  const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
   const swipeX = useRef<number | null>(null);
-  const go = (m: "3d" | "2d") => {
-    if (m === mode) return;
-    setDir(m === "2d" ? 1 : -1);
-    setMode(m);
+
+  // Новая квартира — с первого слайда, иначе индекс «прилипает» от прошлой.
+  useEffect(() => setIdx(0), [unit.id]);
+
+  const go = (n: number) => {
+    const next = Math.max(0, Math.min(slides.length - 1, n));
+    if (next === idx) return;
+    setDir(next > idx ? 1 : -1);
+    setIdx(next);
   };
 
+  const cur = slides[Math.min(idx, slides.length - 1)];
+  const photoCount = slides.filter((s) => s.kind === "photo").length;
+  const photoNo = cur.kind === "photo" ? slides.indexOf(cur) - (src3d ? 1 : 0) + 1 : 0;
+
   const tabs = [
-    { key: "3d" as const, label: "3D" },
-    { key: "2d" as const, label: "2D" },
-  ];
+    { kind: "3d" as const, label: "3D" },
+    { kind: "photo" as const, label: tr("Фото") },
+    { kind: "2d" as const, label: "2D" },
+  ].filter((t) => slides.some((s) => s.kind === t.kind));
+
+  const alt =
+    cur.kind === "3d"
+      ? tr("Квартира {id} — объёмная планировка", { id: unit.id })
+      : cur.kind === "photo"
+        ? tr("Квартира {id} — фото {n}", { id: unit.id, n: photoNo })
+        : tr("Квартира {id} — чертёж", { id: unit.id });
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      {/* Без рендера переключать нечего — показываем чертёж без вкладок. */}
-      {src3d && (
+      {tabs.length > 1 && (
         <div className="mb-3 inline-flex rounded-full bg-black/[0.06] p-1">
           {tabs.map((t) => (
             <button
-              key={t.key}
-              onClick={() => go(t.key)}
-              aria-pressed={mode === t.key}
-              className={`cursor-pointer rounded-full px-5 py-1.5 text-[13px] font-semibold tracking-wide transition-colors duration-200 ${
-                mode === t.key ? "bg-[#0A0A0B] text-white" : "text-[#0A0A0B]/55 hover:text-[#0A0A0B]"
+              key={t.kind}
+              onClick={() => go(slides.findIndex((s) => s.kind === t.kind))}
+              aria-pressed={cur.kind === t.kind}
+              className={`cursor-pointer rounded-full px-4 py-1.5 text-[13px] font-semibold tracking-wide transition-colors duration-200 ${
+                cur.kind === t.kind ? "bg-[#0A0A0B] text-white" : "text-[#0A0A0B]/55 hover:text-[#0A0A0B]"
               }`}
             >
               {t.label}
+              {t.kind === "photo" && photoCount > 1 && (
+                <span className="ml-1 opacity-60">{cur.kind === "photo" ? `${photoNo}/${photoCount}` : photoCount}</span>
+              )}
             </button>
           ))}
         </div>
       )}
 
-      {/* Свайп влево-вправо и стрелки по бокам листают 3D ↔ 2D. */}
+      {/* Высота фиксирована: фото широкие, чертежи бывают узкими — без неё карточка прыгает. */}
       <div
-        className="relative flex w-full touch-pan-y select-none justify-center overflow-hidden"
+        className="relative flex h-[38vh] w-full touch-pan-y select-none items-center justify-center overflow-hidden sm:h-[370px]"
         onPointerDown={(e) => {
           swipeX.current = e.clientX;
         }}
         onPointerUp={(e) => {
-          if (!src3d || swipeX.current === null) return;
+          if (swipeX.current === null) return;
           const dx = e.clientX - swipeX.current;
           swipeX.current = null;
           if (Math.abs(dx) < 40) return;
-          go(dx < 0 ? "2d" : "3d");
+          go(idx + (dx < 0 ? 1 : -1));
         }}
         onPointerCancel={() => {
           swipeX.current = null;
@@ -882,7 +907,7 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <motion.img
-            key={mode}
+            key={cur.src}
             custom={dir}
             variants={{
               enter: (d: number) => ({ x: d * 60, opacity: 0 }),
@@ -894,30 +919,26 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
             exit="exit"
             transition={{ duration: 0.28, ease }}
             draggable={false}
-            src={mode === "3d" && src3d ? src3d : unitPlan(unit)}
-            alt={
-              mode === "3d" && src3d
-                ? tr("Квартира {id} — объёмная планировка", { id: unit.id })
-                : tr("Квартира {id} — чертёж", { id: unit.id })
-            }
-            className="max-h-[42vh] w-auto max-w-full object-contain sm:max-h-[370px]"
+            src={cur.src}
+            alt={alt}
+            className={`max-h-full max-w-full object-contain ${cur.kind === "photo" ? "rounded-xl" : ""}`}
           />
         </AnimatePresence>
 
-        {src3d && (
+        {slides.length > 1 && (
           <>
             <button
-              onClick={() => go("3d")}
-              disabled={mode === "3d"}
-              aria-label="3D"
+              onClick={() => go(idx - 1)}
+              disabled={idx === 0}
+              aria-label="←"
               className="absolute left-1 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/85 text-[#0A0A0B] shadow-md backdrop-blur transition-opacity duration-200 disabled:pointer-events-none disabled:opacity-0"
             >
               <ArrowRight className="h-4 w-4 rotate-180" />
             </button>
             <button
-              onClick={() => go("2d")}
-              disabled={mode === "2d"}
-              aria-label="2D"
+              onClick={() => go(idx + 1)}
+              disabled={idx === slides.length - 1}
+              aria-label="→"
               className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/85 text-[#0A0A0B] shadow-md backdrop-blur transition-opacity duration-200 disabled:pointer-events-none disabled:opacity-0"
             >
               <ArrowRight className="h-4 w-4" />
@@ -925,6 +946,17 @@ function UnitPlanWithLabels({ unit }: { unit: ApartmentGeo }) {
           </>
         )}
       </div>
+
+      {slides.length > 2 && (
+        <div className="mt-3 flex gap-1.5" aria-hidden>
+          {slides.map((s, i) => (
+            <span
+              key={s.src}
+              className={`h-1.5 rounded-full transition-all duration-200 ${i === idx ? "w-4 bg-[#0A0A0B]" : "w-1.5 bg-black/20"}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

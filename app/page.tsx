@@ -37,11 +37,11 @@ export default function Page() {
         <Footer />
       </main>
 
-      {/* Strict `false`: while the viewport is still unknown (`null`) this must
+      {/* Phones and desktop alike. While the viewport is still unknown (`null`) this must
           stay unmounted — StickyCTA animates its own exit via AnimatePresence,
           and mounting then dropping it mid-measure detaches nodes React is
           about to delete. */}
-      {isDesktop === false && <StickyCTA />}
+      {isDesktop !== null && <StickyCTA />}
       <LeadModal />
     </UIProvider>
   );
