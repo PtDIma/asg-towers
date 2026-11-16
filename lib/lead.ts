@@ -28,7 +28,7 @@ export const interestOptions: { value: LeadInterest; label: string }[] = [
 // (e.g. Cloudflare Worker) and keep the token server-side.
 // Overridable via NEXT_PUBLIC_TG_* env vars.
 const TG_BOT_TOKEN = process.env.NEXT_PUBLIC_TG_BOT_TOKEN ?? "";
-const TG_CHAT_ID = process.env.NEXT_PUBLIC_TG_CHAT_ID ?? "-5254382625";
+const TG_CHAT_ID = process.env.NEXT_PUBLIC_TG_CHAT_ID ?? "-1004498867123";
 
 const labelOf = (
   list: { value: string; label: string }[],
