@@ -14,13 +14,16 @@ import { infraIconMap } from "@/components/infraIcons";
 import { FounderBlock } from "@/components/FounderBlock";
 import { useUI } from "@/hooks/useLeadModal";
 import { Button } from "@/components/Button";
-import { ArrowRight } from "@/components/icons";
+import { ArrowDown, ArrowRight } from "@/components/icons";
 import type { LeadInterest } from "@/lib/lead";
 import { trackEvent } from "@/lib/analytics";
 import { useT } from "@/lib/i18n";
 
 const ease = [0.22, 1, 0.36, 1] as const;
-const INFRA_STEP = 600; // scroll px per infra card
+// Сколько прокрутки уходит на экран. Было ~2 жеста на сцену — люди делали один,
+// не видели перемены и уходили. 0.5 — примерно один уверенный свайп на сцену.
+const SPEED = 0.5;
+const INFRA_STEP = 380; // scroll px per infra card
 const FRAME = "/images/elevator-frame.webp";
 // Card area inside the elevator (slightly larger than the frame's transparent
 // hole, so the metal always overlaps the card edges — no spill possible).
@@ -43,7 +46,7 @@ const INFRA_AT = scenesBeforeInfra.length; // infra sits between video 06 and 07
 const RIVER_IDX = allScenes.length; // looping river video sits after the 14 clips
 const INTRO_IDX = RIVER_IDX + 1; // idle 0.mp4 background, shown until first scroll
 const INTRO_SRC = "/videos/00-intro.mp4";
-const FINAL_LEN = 1100; // scroll the final CTA screen stays pinned
+const FINAL_LEN = 600; // scroll the final CTA screen stays pinned
 
 type Segment =
   | { kind: "video"; vIdx: number; scene: Scene; len: number }
@@ -54,22 +57,22 @@ type Segment =
 // Экран соучредителя встаёт сразу после сцены 02: зритель уже понял, что это за
 // объект, и подтверждение от лица ложится в нужный момент. Раньше — рано.
 const AMB_AT = 2;
-const AMB_LEN = 1300;
+const AMB_LEN = 700;
 
 const segments: Segment[] = [
   ...scenesBeforeInfra
     .slice(0, AMB_AT)
-    .map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: s.scrollLength })),
+    .map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: Math.round(s.scrollLength * SPEED) })),
   { kind: "founder" as const, len: AMB_LEN },
   ...scenesBeforeInfra
     .slice(AMB_AT)
-    .map((s, i) => ({ kind: "video" as const, vIdx: AMB_AT + i, scene: s, len: s.scrollLength })),
+    .map((s, i) => ({ kind: "video" as const, vIdx: AMB_AT + i, scene: s, len: Math.round(s.scrollLength * SPEED) })),
   { kind: "infra" as const, len: infraItems.length * INFRA_STEP },
   ...scenesAfterInfra.map((s, i) => ({
     kind: "video" as const,
     vIdx: INFRA_AT + i,
     scene: s,
-    len: s.scrollLength,
+    len: Math.round(s.scrollLength * SPEED),
   })),
   { kind: "final" as const, len: FINAL_LEN },
 ];
@@ -117,7 +120,7 @@ function AnimatedJourney({ wide }: { wide: boolean }) {
     kind: "video",
     idx: 0,
   });
-  const { openLead, setInFinal } = useUI();
+  const { openLead, setInFinal, atStart, setAtStart } = useUI();
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -184,6 +187,7 @@ function AnimatedJourney({ wide }: { wide: boolean }) {
 
       // Idle: 0.mp4 plays behind the scene-01 copy until the first real scroll.
       if (gp > 0.001) startedRef.current = true;
+      setAtStart(gp <= 0.001);
       const introV = videoRefs.current[INTRO_IDX];
       if (seg.kind === "video" && seg.vIdx === 0 && !startedRef.current) {
         showVideo(INTRO_IDX);
@@ -378,10 +382,11 @@ function AnimatedJourney({ wide }: { wide: boolean }) {
 
     return () => {
       disposed = true;
+      setAtStart(false);
       cancelAnimationFrame(rafId);
       cleanup();
     };
-  }, [textProgress, infraCenter, setInFinal]);
+  }, [textProgress, infraCenter, setInFinal, setAtStart]);
 
   const isFinal = view.kind === "final";
   const activeScene = allScenes[Math.min(view.idx, allScenes.length - 1)];
@@ -453,6 +458,20 @@ function AnimatedJourney({ wide }: { wide: boolean }) {
           preload="metadata"
           tabIndex={-1}
         />
+
+        {/* Подсказка листать — только на самом первом экране. */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 z-30 flex flex-col items-center gap-1.5 text-white/85 transition-opacity duration-500 ${
+            atStart ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 20px)" }}
+        >
+          <span className="text-[10px] uppercase tracking-[0.22em] text-white/70">{tr("Листайте")}</span>
+          <span className="flex h-9 w-9 animate-bounce items-center justify-center rounded-full border border-white/35 bg-black/25 backdrop-blur">
+            <ArrowDown className="h-4 w-4" />
+          </span>
+        </div>
 
         {/* Video text overlay */}
         {view.kind === "video" && (

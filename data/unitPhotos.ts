@@ -15,5 +15,21 @@ export const unitPhotoCount: Record<string, number> = {
   "A_4-7_8": 3,
 };
 
-export const unitPhotos = (plan: string) =>
-  Array.from({ length: unitPhotoCount[plan] ?? 0 }, (_, i) => `/images/photos/${plan}-${i + 1}.webp`);
+/**
+ * Планировки с тем же чертежом на других этажах показывают те же фото.
+ * Сверено по площади и 2D: совпадают кухня, санузел, балкон и двери.
+ * A_1-3_4 сюда не входит — там кровать и диван поменяны местами.
+ */
+const sameLayout: Record<string, string> = {
+  "A_1-3_2": "A_4-7_2", "A_8-11_2": "A_4-7_2", "A_12-15_2": "A_4-7_2",
+  "A_1-3_3": "A_4-7_3", "A_8-11_3": "A_4-7_3", "A_12-15_3": "A_4-7_3",
+  "A_8-11_4": "A_4-7_4", "A_12-15_4": "A_4-7_4",
+  "A_8-11_6": "A_4-7_6", "A_12-15_6": "A_4-7_6",
+  "A_8-11_7": "A_4-7_7", "A_12-15_7": "A_4-7_7",
+  "A_8-11_8": "A_4-7_8", "A_12-15_8": "A_4-7_8",
+};
+
+export const unitPhotos = (plan: string) => {
+  const src = unitPhotoCount[plan] ? plan : sameLayout[plan] ?? plan;
+  return Array.from({ length: unitPhotoCount[src] ?? 0 }, (_, i) => `/images/photos/${src}-${i + 1}.webp`);
+};

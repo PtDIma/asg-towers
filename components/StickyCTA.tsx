@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n";
 import { ArrowRight } from "@/components/icons";
 
 export function StickyCTA() {
-  const { isLeadOpen, inFinal } = useUI();
+  const { isLeadOpen, inFinal, atStart } = useUI();
   const tr = useT();
   const [nearContact, setNearContact] = useState(false);
 
@@ -23,7 +23,8 @@ export function StickyCTA() {
     return () => observer.disconnect();
   }, []);
 
-  const hidden = isLeadOpen || inFinal || nearContact;
+  // На первом экране внизу стоит «листайте» — кнопка появляется после первой прокрутки.
+  const hidden = isLeadOpen || inFinal || nearContact || atStart;
 
   const onClick = () => {
     trackEvent("cta_click", { label: "sticky:plans" });

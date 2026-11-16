@@ -29,6 +29,9 @@ interface UIContextValue {
   // True while the reel is on the final CTA screen (sticky bar steps aside).
   inFinal: boolean;
   setInFinal: (v: boolean) => void;
+  // True on the very first screen, before any scroll: the "scroll" hint owns the bottom.
+  atStart: boolean;
+  setAtStart: (v: boolean) => void;
   // Plans tab coordination (kept for the dedicated plans page)
   activeTab: UnitType;
   setActiveTab: (tab: UnitType) => void;
@@ -42,6 +45,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [leadInterest, setLeadInterest] = useState<LeadInterest | undefined>();
   const [leadUnitId, setLeadUnitId] = useState<string | undefined>();
   const [inFinal, setInFinal] = useState(false);
+  const [atStart, setAtStart] = useState(false);
   const [activeTab, setActiveTab] = useState<UnitType>("apartment");
 
   const openLead = useCallback((options: OpenLeadOptions = {}) => {
@@ -71,11 +75,13 @@ export function UIProvider({ children }: { children: ReactNode }) {
       closeLead,
       inFinal,
       setInFinal,
+      atStart,
+      setAtStart,
       activeTab,
       setActiveTab,
       goToPlans,
     }),
-    [isLeadOpen, leadInterest, leadUnitId, openLead, closeLead, inFinal, activeTab, goToPlans]
+    [isLeadOpen, leadInterest, leadUnitId, openLead, closeLead, inFinal, atStart, activeTab, goToPlans]
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

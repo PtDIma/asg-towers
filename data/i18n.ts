@@ -92,6 +92,7 @@ export const dict: Record<string, { en: string; ka: string }> = {
   "Связаться с менеджером": { en: "Contact a manager", ka: "დაუკავშირდით მენეჯერს" },
   "Расчёт доходности": { en: "Yield estimate", ka: "შემოსავლიანობის გათვლა" },
   "Связаться": { en: "Contact", ka: "კონტაქტი" },
+  "Листайте": { en: "Scroll", ka: "ჩამოსქროლეთ" },
   "ASG Towers — маршрут": { en: "ASG Towers — journey", ka: "ASG Towers — მარშრუტი" },
   "Инфраструктура комплекса": { en: "Complex amenities", ka: "კომპლექსის ინფრასტრუქტურა" },
   "Выбор объекта": { en: "Choose a property", ka: "ობიექტის არჩევა" },
