@@ -58,12 +58,14 @@ type Segment =
 // объект, и подтверждение от лица ложится в нужный момент. Раньше — рано.
 const AMB_AT = 2;
 const AMB_LEN = 700;
+// Блок соучредителя временно скрыт. Вернуть — поставить true.
+const SHOW_FOUNDER = false;
 
 const segments: Segment[] = [
   ...scenesBeforeInfra
     .slice(0, AMB_AT)
     .map((s, i) => ({ kind: "video" as const, vIdx: i, scene: s, len: Math.round(s.scrollLength * SPEED) })),
-  { kind: "founder" as const, len: AMB_LEN },
+  ...(SHOW_FOUNDER ? [{ kind: "founder" as const, len: AMB_LEN }] : []),
   ...scenesBeforeInfra
     .slice(AMB_AT)
     .map((s, i) => ({ kind: "video" as const, vIdx: AMB_AT + i, scene: s, len: Math.round(s.scrollLength * SPEED) })),
@@ -534,13 +536,15 @@ function AnimatedJourney({ wide }: { wide: boolean }) {
         </div>
 
         {/* Экран соучредителя — поверх замороженного кадра сцены 02. */}
-        <div ref={ambLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-ink/80" aria-hidden />
-          {/* На десктопе нет нижней плашки CTA, зато шапка выше — центр смещён вниз. */}
-          <div className="relative h-full w-full pb-[calc(env(safe-area-inset-bottom)+84px)] pt-[calc(env(safe-area-inset-top)+64px)] lg:pb-10 lg:pt-24">
-            <FounderBlock animate={false} />
+        {SHOW_FOUNDER && (
+          <div ref={ambLayerRef} className="absolute inset-0 z-30" style={{ opacity: 0 }}>
+            <div className="absolute inset-0 bg-ink/80" aria-hidden />
+            {/* На десктопе нет нижней плашки CTA, зато шапка выше — центр смещён вниз. */}
+            <div className="relative h-full w-full pb-[calc(env(safe-area-inset-bottom)+84px)] pt-[calc(env(safe-area-inset-top)+64px)] lg:pb-10 lg:pt-24">
+              <FounderBlock animate={false} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
@@ -755,9 +759,11 @@ function StaticJourney({ wide }: { wide: boolean }) {
       {allScenes.slice(0, AMB_AT).map((s) => (
         <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
-      <section className="relative w-full bg-ink py-20" aria-label={tr("Соучредитель проекта")}>
-        <FounderBlock animate={false} />
-      </section>
+      {SHOW_FOUNDER && (
+        <section className="relative w-full bg-ink py-20" aria-label={tr("Соучредитель проекта")}>
+          <FounderBlock animate={false} />
+        </section>
+      )}
       {allScenes.slice(AMB_AT, INFRA_AT).map((s) => (
         <StaticScene key={s.id} scene={s} wide={wide} />
       ))}
