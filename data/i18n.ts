@@ -196,7 +196,12 @@ export const dict: Record<string, { en: string; ka: string }> = {
   },
   "Готово": { en: "Done", ka: "მზადაა" },
   "Укажите имя": { en: "Enter your name", ka: "მიუთითეთ სახელი" },
-  "Укажите корректный телефон": { en: "Enter a valid phone number", ka: "მიუთითეთ სწორი ტელეფონის ნომერი" },
+  "Укажите телефон": { en: "Enter your phone number", ka: "მიუთითეთ ტელეფონის ნომერი" },
+  "Проверьте номер: такого номера не бывает в выбранной стране": {
+    en: "Check the number: it isn't valid for the selected country",
+    ka: "შეამოწმეთ ნომერი: არჩეული ქვეყნისთვის ასეთი ნომერი არ არსებობს",
+  },
+  "Страна": { en: "Country", ka: "ქვეყანა" },
   "Выбранный объект:": { en: "Selected property:", ka: "არჩეული ობიექტი:" },
   "Имя": { en: "Name", ka: "სახელი" },
   "Как к вам обращаться": { en: "How should we address you", ka: "როგორ მოგმართოთ" },

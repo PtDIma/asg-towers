@@ -6,6 +6,7 @@ import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 import { useT } from "@/lib/i18n";
 import { usePartner } from "@/lib/partner";
+import { PhoneField, isPhoneValid, formatPhoneIntl, type CountryCode } from "@/components/PhoneField";
 
 interface LeadFormProps {
   defaultInterest?: LeadInterest;
@@ -23,6 +24,7 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
   const partner = usePartner();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState<CountryCode>("GE");
   // Интерес не спрашиваем — он известен по кнопке, с которой открыли форму.
   const interest: LeadInterest = defaultInterest ?? "consultation";
   const [errors, setErrors] = useState<Errors>({});
@@ -32,8 +34,8 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
   const validate = (): Errors => {
     const e: Errors = {};
     if (name.trim().length < 2) e.name = "Укажите имя";
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length < 9) e.phone = "Укажите корректный телефон";
+    if (!phone.trim()) e.phone = "Укажите телефон";
+    else if (!isPhoneValid(phone, country)) e.phone = "Проверьте номер: такого номера не бывает в выбранной стране";
     return e;
   };
 
@@ -51,7 +53,7 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
     setSendError(false);
     const payload: LeadPayload = {
       name: name.trim(),
-      phone: phone.trim(),
+      phone: formatPhoneIntl(phone, country),
       interest,
       unitId,
     };
@@ -105,19 +107,17 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
         <label htmlFor="lead-phone" className="mb-1.5 block text-[13px] text-white/70">
           {tr("Телефон")} <span className="text-gold">*</span>
         </label>
-        <input
-          id="lead-phone"
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          onBlur={() => setErrors((p) => ({ ...p, phone: validate().phone }))}
-          aria-invalid={Boolean(errors.phone)}
-          aria-describedby={errors.phone ? "lead-phone-err" : undefined}
-          placeholder="+995 ..."
-          className="h-[50px] w-full rounded-2xl border border-white/12 bg-white/[0.04] px-4 text-[16px] text-white placeholder:text-white/35 outline-none transition-colors focus:border-gold/60"
+        <PhoneField
+          phone={phone}
+          country={country}
+          onPhone={(v) => {
+            setPhone(v);
+            if (errors.phone) setErrors((p) => ({ ...p, phone: undefined }));
+          }}
+          onCountry={setCountry}
+          onBlur={() => phone.trim() && setErrors((p) => ({ ...p, phone: validate().phone }))}
+          invalid={Boolean(errors.phone)}
+          describedBy={errors.phone ? "lead-phone-err" : undefined}
         />
         {errors.phone && (
           <p id="lead-phone-err" role="alert" className="mt-1.5 text-[12px] text-red-400">
