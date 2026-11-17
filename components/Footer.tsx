@@ -6,10 +6,13 @@ import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 import { contacts, handover } from "@/data/contacts";
 import { useT } from "@/lib/i18n";
+import { usePartner } from "@/lib/partner";
 
 export function Footer() {
   const { openLead } = useUI();
   const tr = useT();
+  // Партнёрская версия (/p/): контакты отдела продаж не показываем.
+  const partner = usePartner();
 
   const contact = () => {
     trackEvent("cta_click", { label: "footer:contact" });
@@ -52,6 +55,8 @@ export function Footer() {
         </div>
 
         <dl className="mt-12 grid gap-6 border-t border-white/10 pt-8 text-[15px] sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
+          {!partner && (
+          <>
           <div>
             <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Телефон")}</dt>
             <dd className="mt-2">
@@ -72,6 +77,8 @@ export function Footer() {
               </a>
             </dd>
           </div>
+          </>
+          )}
           <div>
             <dt className="text-[11px] uppercase tracking-[0.18em] text-white/35">{tr("Сдача объекта")}</dt>
             <dd className="mt-2">{tr(handover)}</dd>

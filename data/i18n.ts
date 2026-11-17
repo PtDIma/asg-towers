@@ -209,6 +209,10 @@ export const dict: Record<string, { en: string; ka: string }> = {
   },
   "Отправляем…": { en: "Sending…", ka: "იგზავნება…" },
   "Отправить заявку": { en: "Send request", ka: "განაცხადის გაგზავნა" },
+  "Не удалось отправить заявку. Попробуйте ещё раз.": {
+    en: "Couldn't send your request. Please try again.",
+    ka: "განაცხადის გაგზავნა ვერ მოხერხდა. სცადეთ თავიდან.",
+  },
   "Не удалось отправить заявку. Попробуйте ещё раз или напишите нам в Telegram.": {
     en: "Couldn't send your request. Please try again or message us on Telegram.",
     ka: "განაცხადის გაგზავნა ვერ მოხერხდა. სცადეთ თავიდან ან მოგვწერეთ Telegram-ში.",

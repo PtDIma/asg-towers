@@ -1,3 +1,5 @@
+import { getPartner } from "@/lib/partner";
+
 export type LeadInterest =
   | "apartment"
   | "office"
@@ -36,6 +38,7 @@ const labelOf = (
 ): string => list.find((o) => o.value === value)?.label ?? value;
 
 function formatLead(p: LeadPayload): string {
+  const partner = getPartner();
   return [
     "🏢 Новая заявка — ASG Towers",
     "",
@@ -43,6 +46,7 @@ function formatLead(p: LeadPayload): string {
     `📞 Телефон: ${p.phone}`,
     `🎯 Интерес: ${labelOf(interestOptions, p.interest)}`,
     p.unitId ? `🏠 Объект: ${p.unitId}` : null,
+    partner ? `🤝 Партнёр: ${partner.name || "без метки"}` : null,
   ]
     .filter(Boolean)
     .join("\n");

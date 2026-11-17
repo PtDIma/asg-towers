@@ -5,6 +5,7 @@ import { submitLead, type LeadInterest, type LeadPayload } from "@/lib/lead";
 import { trackEvent } from "@/lib/analytics";
 import { ArrowRight } from "@/components/icons";
 import { useT } from "@/lib/i18n";
+import { usePartner } from "@/lib/partner";
 
 interface LeadFormProps {
   defaultInterest?: LeadInterest;
@@ -19,6 +20,7 @@ interface Errors {
 
 export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) {
   const tr = useT();
+  const partner = usePartner();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   // Интерес не спрашиваем — он известен по кнопке, с которой открыли форму.
@@ -144,7 +146,9 @@ export function LeadForm({ defaultInterest, unitId, onSuccess }: LeadFormProps) 
 
       {sendError && (
         <p role="alert" className="text-center text-[13px] text-red-400">
-          {tr("Не удалось отправить заявку. Попробуйте ещё раз или напишите нам в Telegram.")}
+          {partner
+            ? tr("Не удалось отправить заявку. Попробуйте ещё раз.")
+            : tr("Не удалось отправить заявку. Попробуйте ещё раз или напишите нам в Telegram.")}
         </p>
       )}
 
