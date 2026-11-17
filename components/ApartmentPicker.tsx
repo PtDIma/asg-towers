@@ -34,6 +34,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
  */
 const status = {
   available: { fill: "#5FBF8B", label: "#7FD6A6", chip: "bg-[#5FBF8B]/15 text-[#7FD6A6] ring-1 ring-[#5FBF8B]/40" },
+  reserved: { fill: "#D9A441", label: "#E8BC6B", chip: "bg-[#D9A441]/15 text-[#E8BC6B] ring-1 ring-[#D9A441]/40" },
   sold: { fill: "#6B6B6B", label: "#9A9A9A", chip: "bg-white/8 text-white/45 ring-1 ring-white/15" },
 } satisfies Record<UnitStatus, { fill: string; label: string; chip: string }>;
 
@@ -180,7 +181,7 @@ function countByStatus(
   units: ApartmentGeo[],
   commercial: Map<string, UnitCommercial>
 ): Record<UnitStatus, number> {
-  const acc: Record<UnitStatus, number> = { available: 0, sold: 0 };
+  const acc: Record<UnitStatus, number> = { available: 0, reserved: 0, sold: 0 };
   for (const u of units) acc[commercial.get(u.id)?.status ?? "available"]++;
   return acc;
 }

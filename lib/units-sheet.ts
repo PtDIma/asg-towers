@@ -18,7 +18,7 @@ const SHEET_ID = "1Rpdi-bSkweYvIGtQksYtBP72VveKQzZbH7ifg_B1Mz8";
 const SHEET_NAME = "Блок А";
 const SHEET_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
-export type UnitStatus = "available" | "sold";
+export type UnitStatus = "available" | "reserved" | "sold";
 
 export interface UnitCommercial {
   id: string;
@@ -35,6 +35,7 @@ export interface UnitCommercial {
 
 export const statusLabels: Record<UnitStatus, string> = {
   available: "Свободна",
+  reserved: "Бронь",
   sold: "Продана",
 };
 
@@ -91,9 +92,7 @@ function viewLabel(raw: string): string | undefined {
 function toStatus(raw: string): UnitStatus {
   const v = raw.trim().toLowerCase();
   if (v.startsWith("sold") || v.startsWith("прода")) return "sold";
-  // Статуса «бронь» на сайте нет. Если в таблице всё же написали бронь —
-  // квартиру не предлагаем как свободную.
-  if (v.startsWith("reserv") || v.startsWith("брон")) return "sold";
+  if (v.startsWith("reserv") || v.startsWith("брон")) return "reserved";
   return "available";
 }
 
