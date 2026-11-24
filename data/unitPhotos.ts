@@ -6,7 +6,6 @@
 export const unitPhotoCount: Record<string, number> = {
   "A_1-3_8": 3,
   "A_1-3_9": 2,
-  "A_4-7_1": 4,
   "A_4-7_2": 4,
   "A_4-7_3": 1,
   "A_4-7_4": 1,
